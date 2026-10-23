@@ -6,3 +6,5 @@ public/
 dist/
 *.log
 sql/
+.env.example
+README.md
