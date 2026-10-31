@@ -1,11 +1,11 @@
-// EXPORTS: DepartmentFilter, DEPARTMENT_FILTER_OPTIONS, MONTH_LABELS, TIME_RANGE_MONTHS, COMPLETE_DEPARTMENT_TREND, DEPARTMENT_PLAN_RATIO, IGM_OT_KPI
+// EXPORTS: DepartmentFilter, DEPARTMENT_FILTER_OPTIONS, MONTH_LABELS, TIME_RANGE_MONTHS, COMPLETE_DEPARTMENT_TREND, DEPARTMENT_PLAN_RATIO
 import {
   MOCK_DEPARTMENT_TREND_DATA,
   type IDepartmentTrendData,
 } from '@/data/departmenttrenddata';
 import type { IKpiData } from '@/data/kpidata';
 
-export type DataDepartment = 'CUT' | 'SEW' | 'EMB' | 'PRI' | 'FIN' | 'OTHER' | 'PAC';
+export type DataDepartment = 'CUT' | 'SEW' | 'EMB' | 'PRI' | 'FIN' | 'PAC' | 'SOC' | 'OTHER';
 
 export type DepartmentFilter = 'all' | 'other' | Exclude<DataDepartment, 'OTHER'>;
 
@@ -17,6 +17,7 @@ export const DEPARTMENT_FILTER_OPTIONS: { key: DepartmentFilter; label: string }
   { key: 'PRI', label: 'PRI' },
   { key: 'FIN', label: 'FIN' },
   { key: 'PAC', label: 'PAC' },
+  { key: 'SOC', label: 'SOC' },
   { key: 'other', label: 'Other' },
 ];
 
@@ -25,7 +26,7 @@ export const OTHER_DEPARTMENTS: DataDepartment[] = ['OTHER'];
 
 export function filterDepartments(selected: DepartmentFilter): DataDepartment[] {
   if (selected === 'all') {
-    return ['CUT', 'SEW', 'EMB', 'PRI', 'FIN', 'OTHER', 'PAC'];
+    return ['CUT', 'SEW', 'EMB', 'PRI', 'FIN', 'PAC', 'SOC', 'OTHER'];
   }
   if (selected === 'other') return OTHER_DEPARTMENTS;
   return [selected];
@@ -74,15 +75,7 @@ export const DEPARTMENT_PLAN_RATIO: Record<DataDepartment, number> = {
   EMB: 0.9,
   PRI: 0.9,
   FIN: 0.92,
-  OTHER: 0.95,
   PAC: 0.94,
-};
-
-export const IGM_OT_KPI: IKpiData = {
-  id: '4',
-  title: 'IGM OT',
-  value: 1320,
-  unit: 'hours',
-  trend: 6.8,
-  sparkline: [1050, 1120, 1180, 1210, 1260, 1320],
+  SOC: 0.94,
+  OTHER: 0.95,
 };

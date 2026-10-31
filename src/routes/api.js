@@ -75,7 +75,7 @@ router.get(
     const range = parseRange(req, res);
     if (!range) return;
     const deptSet = dash.expandDeptParam(req.query.dept);
-    const rows = await dash.buildDailySummary(range.from, range.to, deptSet);
+    const rows = await dash.buildDailySummary(range.from, range.to, deptSet, { date: req.query.date });
     res.json({ from: range.from, to: range.to, rows });
   })
 );
@@ -85,14 +85,36 @@ router.get(
   wrap(async (req, res) => {
     const range = parseRange(req, res);
     if (!range) return;
-    const rows = await dash.buildRecords(range.from, range.to, {
+    const { rows, total, stats, totals } = await dash.buildRecords(range.from, range.to, {
       dept: req.query.dept,
       process: req.query.process,
       alert: req.query.alert,
       search: req.query.search,
+      date: req.query.date,
       heavyOt: req.query.heavyOt,
+      status: req.query.status,
+      drillDept: req.query.drillDept,
+      page: req.query.page,
+      pageSize: req.query.pageSize,
+      sortBy: req.query.sortBy,
+      sortDir: req.query.sortDir,
     });
-    res.json({ from: range.from, to: range.to, total: rows.length, rows });
+    res.json({ from: range.from, to: range.to, total, stats, totals, rows });
+  })
+);
+
+router.get(
+  '/overtime/process-rollup',
+  wrap(async (req, res) => {
+    const range = parseRange(req, res);
+    if (!range) return;
+    const { rows } = await dash.buildProcessRollup(range.from, range.to, {
+      dept: req.query.dept,
+      process: req.query.process,
+      alert: req.query.alert,
+      date: req.query.date,
+    });
+    res.json({ from: range.from, to: range.to, rows });
   })
 );
 
@@ -124,16 +146,6 @@ router.get(
     const deptSet = dash.expandDeptParam(req.query.dept);
     const stats = await dash.buildSpikeStats(range.from, range.to, deptSet);
     res.json({ from: range.from, to: range.to, ...stats });
-  })
-);
-
-router.get(
-  '/last-swipes',
-  wrap(async (req, res) => {
-    const range = parseRange(req, res);
-    if (!range) return;
-    const rows = await dash.buildLastSwipes(range.from, range.to);
-    res.json({ from: range.from, to: range.to, rows });
   })
 );
 

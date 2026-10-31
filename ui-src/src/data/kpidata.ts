@@ -20,21 +20,23 @@ export const MOCK_KPI_DATA: IKpiData[] = [
   {
     id: '2',
     title: 'Total OT (Plan)',
-    // Temporary demo value: 2,000h vs Actual 4,000h → yellow warning tier
-    // under the default 3-day search window (yellow 3,875 / orange 4,812.5).
-    value: 2000,
+    // Temporary demo value: 60,000h vs Actual 185,000h → red warning tier
+    // under the default 3-month search window (~93 days; red threshold
+    // 60,000 + 1,250 × 93 ≈ 176,250).
+    value: 60000,
     unit: 'hours',
     trend: 8.7,
-    sparkline: [2000, 2200, 2400, 2600, 2800, 2000],
+    sparkline: [52000, 54000, 56000, 58000, 59000, 60000],
   },
   {
     id: '3',
     title: 'Actual OT',
-    // Temporary demo value: 4,000h vs Plan 2,000h → yellow warning tier
-    // under the default 3-day search window.
-    value: 4000,
+    // Temporary demo value: 185,000h vs Plan 60,000h → red warning tier
+    // under the default 3-month search window (red threshold ≈ 176,250,
+    // i.e. ~1.5h OT per worker per day over the envelope).
+    value: 185000,
     unit: 'hours',
-    trend: 10.2,
-    sparkline: [2600, 2900, 3200, 3500, 3800, 4000],
+    trend: 22.5,
+    sparkline: [150000, 158000, 166000, 174000, 180000, 185000],
   },
 ]

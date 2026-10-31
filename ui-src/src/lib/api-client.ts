@@ -47,7 +47,7 @@ export const api = {
     get<{ from: string; to: string; cards: IKpiData[] }>('/kpi', { ...range }),
 
   summary: (range: DateRange) =>
-    get<{ workerCount: number; planHours: number; actualHours: number; igmHours: number; searchDays: number }>(
+    get<{ workerCount: number; planHours: number; actualHours: number; searchDays: number }>(
       '/overtime/summary',
       { ...range }
     ),
@@ -57,15 +57,64 @@ export const api = {
 
   records: (
     range: DateRange,
-    opts: { dept?: string; process?: string; alert?: string; search?: string; heavyOt?: boolean } = {}
+    opts: {
+      dept?: string;
+      process?: string;
+      alert?: string;
+      search?: string;
+      date?: string;
+      heavyOt?: boolean;
+      status?: string;
+      drillDept?: string;
+      page?: number;
+      pageSize?: number;
+      sortBy?: string;
+      sortDir?: string;
+    } = {}
   ) =>
-    get<{ rows: IWorkerOtRecord[]; total: number }>('/overtime/records', {
+    get<{
+      rows: IWorkerOtRecord[];
+      total: number;
+      stats?: { cases: number; unique: number } | null;
+      totals?: { plan: number; actual: number };
+    }>('/overtime/records', {
       ...range,
       dept: opts.dept || 'all',
       process: opts.process,
       alert: opts.alert,
       search: opts.search,
+      date: opts.date,
       heavyOt: opts.heavyOt ? '1' : undefined,
+      status: opts.status,
+      drillDept: opts.drillDept,
+      page: opts.page !== undefined ? String(opts.page) : undefined,
+      pageSize: opts.pageSize !== undefined ? String(opts.pageSize) : undefined,
+      sortBy: opts.sortBy,
+      sortDir: opts.sortDir,
+    }),
+
+  processRollup: (
+    range: DateRange,
+    opts: { dept?: string; process?: string; alert?: string; date?: string } = {}
+  ) =>
+    get<{
+      rows: {
+        date: string;
+        process: string;
+        workers: number;
+        records: number;
+        plan: number;
+        actual: number;
+        over: number;
+        level: string;
+        status: string;
+      }[];
+    }>('/overtime/process-rollup', {
+      ...range,
+      dept: opts.dept || 'all',
+      process: opts.process,
+      alert: opts.alert,
+      date: opts.date,
     }),
 
   monthly: (range: DateRange) => get<{ rows: IMonthlyData[] }>('/overtime/monthly', { ...range }),
@@ -74,11 +123,5 @@ export const api = {
     get<{ rows: { id: string; month: string; department: string; hours: number; planHours?: number }[] }>(
       '/overtime/department-trend',
       { ...range }
-    ),
-
-  spikeStats: (range: DateRange, dept = 'all') =>
-    get<{ buckets: { department: string; workerDays: number; uniqueWorkers: number; maxDailyWorkers: number; peakDate: string; alert: { level: string; color: string } }[] }>(
-      '/ot/spike-stats',
-      { ...range, dept }
     ),
 };

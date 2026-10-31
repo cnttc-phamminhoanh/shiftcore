@@ -38,7 +38,6 @@ void i18n.use(initReactI18next).init({
 });
 
 // Chuyển ngôn ngữ tức thì + LƯU LẠI vào localStorage để lần sau vào dùng lại.
-// Pure UI concern — no data refetch, no filter reset, no page reload.
 export function changeAppLanguage(language: AppLanguage): void {
   void i18n.changeLanguage(language);
   try {

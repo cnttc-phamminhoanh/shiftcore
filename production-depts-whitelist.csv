@@ -1,0 +1,302 @@
+﻿Trạng thái phòng ban,Tên phòng ban,Tên tiếng Anh,Mã phòng ban
+ACTIVE,Cắt,Cutting,21A010101
+ACTIVE,Cắt,Cutting,21A01
+ACTIVE,Cắt,Cutting,21A0101
+ACTIVE,Cắt 01,Cutting 01,21A010102
+ACTIVE,Cắt 02,Cutting 02,21A010103
+ACTIVE,Cắt 03,Cutting 03,21A010104
+ACTIVE,Cắt 04,Cutting 04,21A010105
+ACTIVE,Cắt 05,Cutting 05,21A010106
+ACTIVE,Cắt 06,Cutting 06,21A010107
+ACTIVE,Cắt 07,Cutting 07,21A010108
+ACTIVE,Cắt đồ chơi 11,Toy Cutting 11,21A010109
+ACTIVE,Đóng gói,Packaging,21A0901
+ACTIVE,Đóng gói,Packaging,21A09
+ACTIVE,Đóng gói 01,Packaging 01,21A0902
+ACTIVE,Đóng gói 07,Packaging 07,21A0903
+ACTIVE,Đóng gói 09,Packaging 09,21A0904
+ACTIVE,Hoàn thiện 01,Finishing 01,21A0202
+ACTIVE,Hoàn thiện 07,Finishing 07,21A0302
+ACTIVE,Hoàn thiện 08A,Finishing 08A,21A0402
+ACTIVE,Hoàn thiện 08B,Finishing 08B,21A0502
+ACTIVE,In,Printing,21A0801
+ACTIVE,In,Printing,21A080101
+ACTIVE,In,Printing,21A08
+ACTIVE,In - Chụp bản,Printing - Screen,21A080103
+ACTIVE,"In - QC, Sấy","Printing - QC, Curing",21A080104
+ACTIVE,In - Sản xuất,Printing - Production,21A080102
+ACTIVE,May 01,Sewing 01,21A0201
+ACTIVE,May 07,Sewing 07,21A0301
+ACTIVE,May 08,Sewing 08,21A1301
+ACTIVE,May đồ chơi 11,Toy Sewing 11,21T0104
+ACTIVE,May thủ công đồ chơi 11,Toy Hand Sewing 11,21T0103
+ACTIVE,Nhóm Tinh Anh,Elite Group,21A100103
+ACTIVE,Tất,Sock,21A0701
+ACTIVE,Tất,Sock,21A070104
+ACTIVE,Tất,Sock,21A07
+ACTIVE,Tất 01,Sock 01,21A070101
+ACTIVE,Tất 02,Sock 02,21A070102
+ACTIVE,Thêu,Embroidering,21A0601
+ACTIVE,Thêu,Embroidering,21A06
+ACTIVE,Thêu,Embroidering,21A060104
+ACTIVE,Thêu 01,Embroidering 01,21A060101
+ACTIVE,Thêu 02,Embroidering 02,21A060102
+ACTIVE,Thêu 03,Embroidering 03,21A060103
+ACTIVE,Xưởng 01 - Chuyền may 01,Factory 01 - Sewing line 01,21A020101
+ACTIVE,Xưởng 01 - Chuyền may 02,Factory 01 - Sewing line 02,21A020102
+ACTIVE,Xưởng 01 - Chuyền may 03,Factory 01 - Sewing line 03,21A020103
+ACTIVE,Xưởng 01 - Chuyền may 04,Factory 01 - Sewing line 04,21A020104
+ACTIVE,Xưởng 01 - Chuyền may 05,Factory 01 - Sewing line 05,21A020105
+ACTIVE,Xưởng 01 - Chuyền may 06,Factory 01 - Sewing line 06,21A020106
+ACTIVE,Xưởng 01 - Chuyền may 07,Factory 01 - Sewing line 07,21A020107
+ACTIVE,Xưởng 01 - Chuyền may 08,Factory 01 - Sewing line 08,21A020108
+ACTIVE,Xưởng 01 - Chuyền may 09,Factory 01 - Sewing line 09,21A020109
+ACTIVE,Xưởng 01 - Chuyền may 10,Factory 01 - Sewing line 10,21A020110
+ACTIVE,Xưởng 01 - Chuyền may 11,Factory 01 - Sewing line 11,21A020111
+ACTIVE,Xưởng 01 - Đóng gói,Factory 01 - Packing,21A090202
+ACTIVE,Xưởng 01 - Đóng nút,Factory 01 - Button,21A020204
+ACTIVE,Xưởng 01 - Đóng thùng,Factory 01 - Crating,21A090203
+ACTIVE,Xưởng 01 - Hoàn thiện,Factory 01 - Finishing,21A020201
+ACTIVE,Xưởng 01 - Kiểm hàng may,Factory 01 - Sewing check,21A020202
+ACTIVE,Xưởng 01 - Kiểm hàng may sau ủi,Factory 01 - Final Check after Ironing,21A020203
+ACTIVE,Xưởng 01 - May,Factory 01 - Sewing,21A020112
+ACTIVE,Xưởng 01 - Ủi,Factory 01 - Ironing,21A020205
+ACTIVE,Xưởng 07 - Chuyền may 01,Factory 07 - Sewing line 01,21A030101
+ACTIVE,Xưởng 07 - Chuyền may 02,Factory 07 - Sewing line 02,21A030102
+ACTIVE,Xưởng 07 - Chuyền may 03,Factory 07 - Sewing line 03,21A030103
+ACTIVE,Xưởng 07 - Chuyền may 04,Factory 07 - Sewing line 04,21A030104
+ACTIVE,Xưởng 07 - Chuyền may 05,Factory 07 - Sewing line 05,21A030105
+ACTIVE,Xưởng 07 - Chuyền may 06,Factory 07 - Sewing line 06,21A030106
+ACTIVE,Xưởng 07 - Chuyền may 07,Factory 07 - Sewing line 07,21A030107
+ACTIVE,Xưởng 07 - Chuyền may 08,Factory 07 - Sewing line 08,21A030108
+ACTIVE,Xưởng 07 - Chuyền may 09,Factory 07 - Sewing line 09,21A030109
+ACTIVE,Xưởng 07 - Chuyền may 10,Factory 07 - Sewing line 10,21A030110
+ACTIVE,Xưởng 07 - Chuyền may 11,Factory 07 - Sewing line 11,21A030111
+ACTIVE,Xưởng 07 - Đóng gói,Factory 07 - Packing,21A090302
+ACTIVE,Xưởng 07 - Đóng nút,Factory 07 - Button,21A030204
+ACTIVE,Xưởng 07 - Đóng thùng,Factory 07 - Crating,21A090303
+ACTIVE,Xưởng 07 - Hoàn thiện,Factory 07 - Finishing,21A030201
+ACTIVE,Xưởng 07 - Kiểm hàng may,Factory 07 - Sewing check,21A030202
+ACTIVE,Xưởng 07 - Kiểm hàng may sau ủi,Factory 07 - Final Check after Ironing,21A030203
+ACTIVE,Xưởng 07 - May,Factory 07 - Sewing,21A030112
+ACTIVE,Xưởng 07 - Ủi,Factory 07 - Ironing,21A030205
+ACTIVE,Xưởng 08 - Chuyền may 01,Factory 08 - Sewing line 01,21A130102
+ACTIVE,Xưởng 08 - Chuyền may 02,Factory 08 - Sewing line 02,21A130103
+ACTIVE,Xưởng 08 - Chuyền may 03,Factory 08 - Sewing line 03,21A130104
+ACTIVE,Xưởng 08 - Chuyền may 04,Factory 08 - Sewing line 04,21A130105
+ACTIVE,Xưởng 08 - Chuyền may 05,Factory 08 - Sewing line 05,21A130106
+ACTIVE,Xưởng 08 - Chuyền may 06,Factory 08 - Sewing Line 06,21A130107
+ACTIVE,Xưởng 08 - Chuyền may 07,Factory 08 - Sewing Line 07,21A130108
+ACTIVE,Xưởng 08 - Chuyền may 08,Factory 08 - Sewing line 08,21A130109
+ACTIVE,Xưởng 08 - Chuyền may 09,Factory 08 - Sewing line 09,21A130110
+ACTIVE,Xưởng 08 - Chuyền may 10,Factory 08 - Sewing line 10,21A130111
+ACTIVE,Xưởng 08 - Chuyền may 11,Factory 08 - Sewing line 11,21A130112
+ACTIVE,Xưởng 08 - Chuyền may 12,Factory 08 - Sewing line 12,21A130113
+ACTIVE,Xưởng 08 - Chuyền may 13,Factory 08 - Sewing line 13,21A130114
+ACTIVE,Xưởng 08 - Chuyền may 14,Factory 08 - Sewing line 14,21A130115
+ACTIVE,Xưởng 08 - Chuyền may 15,Factory 08 - Sewing line 15,21A130116
+ACTIVE,Xưởng 08 - Chuyền may 16,Factory 08 - Sewing line 16,21A130117
+ACTIVE,Xưởng 08 - Chuyền may 17,Factory 08 - Sewing line 17,21A130118
+ACTIVE,Xưởng 08 - Chuyền may 18,Factory 08 - Sewing line 18,21A130119
+ACTIVE,Xưởng 08 - Chuyền may 19,Factory 08 - Sewing line 19,21A130120
+ACTIVE,Xưởng 08 - Chuyền may 20,Factory 08 - Sewing line 20,21A130121
+ACTIVE,Xưởng 08 - Đóng nút 01,Factory 08 - Button 01,21A130126
+ACTIVE,Xưởng 08 - Đóng nút 02,Factory 08 - Button 02 ,21A130127
+ACTIVE,Xưởng 08 - Kiểm hàng may,Factory 08 - Checking in line,21A130122
+ACTIVE,Xưởng 08 - Kiểm hàng may 01,Factory 08 - Checking in line 01,21A130123
+ACTIVE,Xưởng 08 - Kiểm hàng may 02,Factory 08 - Checking in line 02,21A130124
+ACTIVE,Xưởng 08 - Kiểm hàng may WF,Factory 08 - Checking in-line WF,21A130125
+ACTIVE,Xưởng 08 - May,Factory 08 - Sewing,21A130101
+ACTIVE,Xưởng 08 - Ủi 01,Factory 08 - Ironing 01,21A130128
+ACTIVE,Xưởng 08 - Ủi 02,Factory 08 - Ironing 02 ,21A130129
+ACTIVE,Xưởng 08A - Chuyền may 10,Factory 08A - Sewing line 10,21A040110
+ACTIVE,Xưởng 09 - Đóng gói 01,Factory 09 - Packing 01,21A090402
+ACTIVE,Xưởng 09 - Đóng gói 02,Factory 09 - Packing 02,21A090403
+ACTIVE,Xưởng 09 - Đóng thùng 01,Factory 09 - Crating 01,21A090404
+ACTIVE,Xưởng 09 - Đóng thùng 02,Factory 09 - Crating 02,21A090405
+ACTIVE,Xưởng 09 - Hoàn thiện,Factory 09 - Finishing,21A110101
+ACTIVE,Xưởng 11 - Chuyền may 01,Factory 11 - Sewing line 01,21T010402
+ACTIVE,Xưởng 11 - Chuyền may 02,Factory 11 - Sewing line 02,21T010403
+ACTIVE,Xưởng 11 - Chuyền may 03,Factory 11 - Sewing line 03,21T010404
+ACTIVE,Xưởng 11 - Chuyền may 04,Factory 11 - Sewing line 04,21T010405
+ACTIVE,Xưởng 11 - Chuyền may 05,Factory 11 - Sewing line 05,21T010406
+ACTIVE,Xưởng 11 - Chuyền may 06,Factory 11 - Sewing line 06,21T010407
+ACTIVE,Xưởng 11 - Kiểm hàng may đồ chơi,Factory 11 - Toy Checking in line,21T010408
+ACTIVE,Xưởng 11 - May thủ công đồ chơi 01,Factory 11 - Toy Hand Sewing line 01,21T010301
+INACTIVE,Cắt,Cutting,24A01
+INACTIVE,Cắt,Cutting,24A010101
+INACTIVE,Cắt,Cutting,24A0101
+INACTIVE,Cắt 01,Cutting 01,24A010102
+INACTIVE,Cắt 02,Cutting 02,24A010103
+INACTIVE,Cắt 03,Cutting 03,24A010104
+INACTIVE,Cắt 04,Cutting 04,24A010105
+INACTIVE,Cắt 05,Cutting 05,24A010106
+INACTIVE,Cắt 06,Cutting 06,24A010107
+INACTIVE,Cắt 07,Cutting 07,24A010108
+INACTIVE,Cắt đồ chơi 11,Toy Cutting 11,24A010109
+INACTIVE,Đóng gói,Packaging,24A0901
+INACTIVE,Đóng gói,Packaging,24A09
+INACTIVE,Đóng gói 01,Packaging 01,24A0902
+INACTIVE,Đóng gói 07,Packaging 07,24A0903
+INACTIVE,Đóng gói 09,Packaging 09,24A0904
+INACTIVE,Hoàn thiện 01,Finishing 01,24A0202
+INACTIVE,Hoàn thiện 07,Finishing 07,24A0302
+INACTIVE,Hoàn thiện 08A,Finishing 08A,24A0402
+INACTIVE,Hoàn thiện 08B,Finishing 08B,24A0502
+INACTIVE,Hoàn thiện 09,Finishing 09,24A1101
+INACTIVE,Hoàn thiện 09,Finishing 09,21A1101
+INACTIVE,Hoàn thiện WF,Finishing WF,21A11
+INACTIVE,Hoàn thiện WF,Finishing WF,24A11
+INACTIVE,In,Printing,24A0801
+INACTIVE,In,Printing,24A08
+INACTIVE,In,Printing,24A080101
+INACTIVE,In - Chụp bản,Printing - Screen,24A080103
+INACTIVE,"In - QC, Sấy","Printing - QC, Curing",24A080104
+INACTIVE,In - Sản xuất,Printing - Production,24A080102
+INACTIVE,In - Thu phát,Printing - Transceiver,24A080105
+INACTIVE,May 01,Sewing 01,24A0201
+INACTIVE,May 07,Sewing 07,24A0301
+INACTIVE,May 08A,Sewing 08A,21A0401
+INACTIVE,May 08A,Sewing 08A,24A0401
+INACTIVE,May 08B,Sewing 08B,24A0501
+INACTIVE,May 08B,Sewing 08B,21A0501
+INACTIVE,May đồ chơi 11,Toy Sewing 11,24T0104
+INACTIVE,May thủ công đồ chơi 11,Toy Hand Sewing 11,24T0103
+INACTIVE,Nhóm Tinh Anh,Elite Group,24A100103
+INACTIVE,Tất,Sock,24A070104
+INACTIVE,Tất,Sock,24A07
+INACTIVE,Tất,Sock,24A0701
+INACTIVE,Tất 01,Sock 01,24A070101
+INACTIVE,Tất 02,Sock 02,24A070102
+INACTIVE,Thêu,Embroidering,24A0601
+INACTIVE,Thêu,Embroidering,24A060104
+INACTIVE,Thêu,Embroidering,24A06
+INACTIVE,Thêu 01,Embroidering 01,24A060101
+INACTIVE,Thêu 02,Embroidering 02,24A060102
+INACTIVE,Thêu 03,Embroidering 03,24A060103
+INACTIVE,Xưởng 01 - Chuyền may 01,Factory 01 - Sewing line 01,24A020101
+INACTIVE,Xưởng 01 - Chuyền may 02,Factory 01 - Sewing line 02,24A020102
+INACTIVE,Xưởng 01 - Chuyền may 03,Factory 01 - Sewing line 03,24A020103
+INACTIVE,Xưởng 01 - Chuyền may 04,Factory 01 - Sewing line 04,24A020104
+INACTIVE,Xưởng 01 - Chuyền may 05,Factory 01 - Sewing line 05,24A020105
+INACTIVE,Xưởng 01 - Chuyền may 06,Factory 01 - Sewing line 06,24A020106
+INACTIVE,Xưởng 01 - Chuyền may 07,Factory 01 - Sewing line 07,24A020107
+INACTIVE,Xưởng 01 - Chuyền may 08,Factory 01 - Sewing line 08,24A020108
+INACTIVE,Xưởng 01 - Chuyền may 09,Factory 01 - Sewing line 09,24A020109
+INACTIVE,Xưởng 01 - Chuyền may 10,Factory 01 - Sewing line 10,24A020110
+INACTIVE,Xưởng 01 - Chuyền may 11,Factory 01 - Sewing line 11,24A020111
+INACTIVE,Xưởng 01 - Đóng gói,Factory 01 - Packing,24A090202
+INACTIVE,Xưởng 01 - Đóng nút,Factory 01 - Button,24A020204
+INACTIVE,Xưởng 01 - Đóng thùng,Factory 01 - Crating,24A090203
+INACTIVE,Xưởng 01 - Hoàn thiện,Factory 01 - Finishing,24A020201
+INACTIVE,Xưởng 01 - Kiểm hàng may,Factory 01 - Sewing check,24A020202
+INACTIVE,Xưởng 01 - Kiểm hàng may sau ủi,Factory 01 - Final Check after Ironing,24A020203
+INACTIVE,Xưởng 01 - May,Factory 01 - Sewing,24A020112
+INACTIVE,Xưởng 01 - Ủi,Factory 01 - Ironing,24A020205
+INACTIVE,Xưởng 07 - Chuyền may 01,Factory 07 - Sewing line 01,24A030101
+INACTIVE,Xưởng 07 - Chuyền may 02,Factory 07 - Sewing line 02,24A030102
+INACTIVE,Xưởng 07 - Chuyền may 03,Factory 07 - Sewing line 03,24A030103
+INACTIVE,Xưởng 07 - Chuyền may 04,Factory 07 - Sewing line 04,24A030104
+INACTIVE,Xưởng 07 - Chuyền may 05,Factory 07 - Sewing line 05,24A030105
+INACTIVE,Xưởng 07 - Chuyền may 06,Factory 07 - Sewing line 06,24A030106
+INACTIVE,Xưởng 07 - Chuyền may 07,Factory 07 - Sewing line 07,24A030107
+INACTIVE,Xưởng 07 - Chuyền may 08,Factory 07 - Sewing line 08,24A030108
+INACTIVE,Xưởng 07 - Chuyền may 09,Factory 07 - Sewing line 09,24A030109
+INACTIVE,Xưởng 07 - Chuyền may 10,Factory 07 - Sewing line 10,24A030110
+INACTIVE,Xưởng 07 - Chuyền may 11,Factory 07 - Sewing line 11,24A030111
+INACTIVE,Xưởng 07 - Đóng gói,Factory 07 - Packing,24A090302
+INACTIVE,Xưởng 07 - Đóng nút,Factory 07 - Button,24A030204
+INACTIVE,Xưởng 07 - Đóng thùng,Factory 07 - Crating,24A090303
+INACTIVE,Xưởng 07 - Hoàn thiện,Factory 07 - Finishing,24A030201
+INACTIVE,Xưởng 07 - Kiểm hàng may,Factory 07 - Sewing check,24A030202
+INACTIVE,Xưởng 07 - Kiểm hàng may sau ủi,Factory 07 - Final Check after Ironing,24A030203
+INACTIVE,Xưởng 07 - May,Factory 07 - Sewing,24A030112
+INACTIVE,Xưởng 07 - Ủi,Factory 07 - Ironing,24A030205
+INACTIVE,Xưởng 08A - Chuyền may 01,Factory 08A - Sewing line 01,24A040101
+INACTIVE,Xưởng 08A - Chuyền may 01,Factory 08A - Sewing line 01,21A040101
+INACTIVE,Xưởng 08A - Chuyền may 02,Factory 08A - Sewing line 02,21A040102
+INACTIVE,Xưởng 08A - Chuyền may 02,Factory 08A - Sewing line 02,24A040102
+INACTIVE,Xưởng 08A - Chuyền may 03,Factory 08A - Sewing line 03,21A040103
+INACTIVE,Xưởng 08A - Chuyền may 03,Factory 08A - Sewing line 03,24A040103
+INACTIVE,Xưởng 08A - Chuyền may 04,Factory 08A - Sewing line 04,21A040104
+INACTIVE,Xưởng 08A - Chuyền may 04,Factory 08A - Sewing line 04,24A040104
+INACTIVE,Xưởng 08A - Chuyền may 05,Factory 08A - Sewing line 05,21A040105
+INACTIVE,Xưởng 08A - Chuyền may 05,Factory 08A - Sewing line 05,24A040105
+INACTIVE,Xưởng 08A - Chuyền may 06,Factory 08A - Sewing line 06,24A040106
+INACTIVE,Xưởng 08A - Chuyền may 06,Factory 08A - Sewing line 06,21A040106
+INACTIVE,Xưởng 08A - Chuyền may 07,Factory 08A - Sewing line 07,24A040107
+INACTIVE,Xưởng 08A - Chuyền may 07,Factory 08A - Sewing line 07,21A040107
+INACTIVE,Xưởng 08A - Chuyền may 08,Factory 08A - Sewing line 08,21A040108
+INACTIVE,Xưởng 08A - Chuyền may 08,Factory 08A - Sewing line 08,24A040108
+INACTIVE,Xưởng 08A - Chuyền may 09,Factory 08A - Sewing line 09,24A040109
+INACTIVE,Xưởng 08A - Chuyền may 09,Factory 08A - Sewing line 09,21A040109
+INACTIVE,Xưởng 08A - Chuyền may 10,Factory 08A - Sewing line 10,24A040110
+INACTIVE,Xưởng 08A - Đóng nút,Factory 08A - Button,21A040204
+INACTIVE,Xưởng 08A - Đóng nút,Factory 08A - Button,24A040204
+INACTIVE,Xưởng 08A - Hoàn thiện,Factory 08A - Finishing,24A040201
+INACTIVE,Xưởng 08A - Hoàn thiện,Factory 08A - Finishing,21A040201
+INACTIVE,Xưởng 08A - Kiểm hàng may,Factory 08A - Sewing check,24A040202
+INACTIVE,Xưởng 08A - Kiểm hàng may,Factory 08A - Sewing check,21A040202
+INACTIVE,Xưởng 08A - Kiểm hàng may sau ủi,Factory 08A - Final Check after Ironing,24A040203
+INACTIVE,Xưởng 08A - Kiểm hàng may sau ủi,Factory 08A - Final Check after Ironing,21A040203
+INACTIVE,Xưởng 08A - May,Factory 08A - Sewing,21A040111
+INACTIVE,Xưởng 08A - May,Factory 08A - Sewing,24A040111
+INACTIVE,Xưởng 08A - Ủi,Factory 08A - Ironing,24A040205
+INACTIVE,Xưởng 08A - Ủi,Factory 08A - Ironing,21A040205
+INACTIVE,Xưởng 08B - Chuyền may 11,Factory 08B - Sewing line 11,21A050101
+INACTIVE,Xưởng 08B - Chuyền may 11,Factory 08B - Sewing line 11,24A050101
+INACTIVE,Xưởng 08B - Chuyền may 12,Factory 08B - Sewing line 12,24A050102
+INACTIVE,Xưởng 08B - Chuyền may 12,Factory 08B - Sewing line 12,21A050102
+INACTIVE,Xưởng 08B - Chuyền may 13,Factory 08B - Sewing line 13,24A050103
+INACTIVE,Xưởng 08B - Chuyền may 13,Factory 08B - Sewing line 13,21A050103
+INACTIVE,Xưởng 08B - Chuyền may 14,Factory 08B - Sewing line 14,24A050104
+INACTIVE,Xưởng 08B - Chuyền may 14,Factory 08B - Sewing line 14,21A050104
+INACTIVE,Xưởng 08B - Chuyền may 15,Factory 08B - Sewing line 15,21A050105
+INACTIVE,Xưởng 08B - Chuyền may 15,Factory 08B - Sewing line 15,24A050105
+INACTIVE,Xưởng 08B - Chuyền may 16,Factory 08B - Sewing line 16,24A050106
+INACTIVE,Xưởng 08B - Chuyền may 16,Factory 08B - Sewing line 16,21A050106
+INACTIVE,Xưởng 08B - Chuyền may 17,Factory 08B - Sewing line 17,21A050107
+INACTIVE,Xưởng 08B - Chuyền may 17,Factory 08B - Sewing line 17,24A050107
+INACTIVE,Xưởng 08B - Chuyền may 18,Factory 08B - Sewing line 18,21A050108
+INACTIVE,Xưởng 08B - Chuyền may 18,Factory 08B - Sewing line 18,24A050108
+INACTIVE,Xưởng 08B - Chuyền may 19,Factory 08B - Sewing line 19,21A050109
+INACTIVE,Xưởng 08B - Chuyền may 19,Factory 08B - Sewing line 19,24A050109
+INACTIVE,Xưởng 08B - Chuyền may 20,Factory 08B - Sewing line 20,21A050110
+INACTIVE,Xưởng 08B - Chuyền may 20,Factory 08B - Sewing line 20,24A050110
+INACTIVE,Xưởng 08B - Đóng nút,Factory 08B - Button,21A050204
+INACTIVE,Xưởng 08B - Đóng nút,Factory 08B - Button,24A050204
+INACTIVE,Xưởng 08B - Hoàn thiện,Factory 08B - Finishing,21A050201
+INACTIVE,Xưởng 08B - Hoàn thiện,Factory 08B - Finishing,24A050201
+INACTIVE,Xưởng 08B - Kiểm hàng may,Factory 08B - Sewing check,21A050202
+INACTIVE,Xưởng 08B - Kiểm hàng may,Factory 08B - Sewing check,24A050202
+INACTIVE,Xưởng 08B - Kiểm hàng may sau ủi,Factory 08B - Final Check after Ironing,24A050203
+INACTIVE,Xưởng 08B - Kiểm hàng may sau ủi,Factory 08B - Final Check after Ironing,21A050203
+INACTIVE,Xưởng 08B - May,Factory 08B - Sewing,21A050111
+INACTIVE,Xưởng 08B - May,Factory 08B - Sewing,24A050111
+INACTIVE,Xưởng 08B - Ủi,Factory 08B - Ironing,24A050205
+INACTIVE,Xưởng 08B - Ủi,Factory 08B - Ironing,21A050205
+INACTIVE,Xưởng 09 - Đóng gói 01,Factory 09 - Packing 01,24A090402
+INACTIVE,Xưởng 09 - Đóng gói 02,Factory 09 - Packing 02,24A090403
+INACTIVE,Xưởng 09 - Đóng gói 03,Factory 09 - Packing 03,24A090406
+INACTIVE,Xưởng 09 - Đóng nút,Factory 09 - Button,24A110102
+INACTIVE,Xưởng 09 - Đóng nút,Factory 09 - Button,21A110102
+INACTIVE,Xưởng 09 - Đóng thùng 01,Factory 09 - Crating 01,24A090404
+INACTIVE,Xưởng 09 - Đóng thùng 02,Factory 09 - Crating 02,24A090405
+INACTIVE,Xưởng 09 - Hoàn thiện,Factory 09 - Finishing,24A110101
+INACTIVE,Xưởng 09 - Kiểm hàng may,Factory 09 - Sewing check,24A110105
+INACTIVE,Xưởng 09 - Kiểm hàng may,Factory 09 - Sewing check,21A110105
+INACTIVE,Xưởng 09 - Kiểm hàng may sau ủi,Factory 09 - Final Check after Ironing,21A110104
+INACTIVE,Xưởng 09 - Kiểm hàng may sau ủi,Factory 09 - Final Check after Ironing,24A110104
+INACTIVE,Xưởng 09 - Ủi,Factory 09 - Ironing,21A110103
+INACTIVE,Xưởng 09 - Ủi,Factory 09 - Ironing,24A110103
+INACTIVE,Xưởng 11 - Chuyền may 01,Factory 11 - Sewing line 01,24T010402
+INACTIVE,Xưởng 11 - Chuyền may 02,Factory 11 - Sewing line 02,24T010403
+INACTIVE,Xưởng 11 - Chuyền may 03,Factory 11 - Sewing line 03,24T010404
+INACTIVE,Xưởng 11 - Chuyền may 04,Factory 11 - Sewing line 04,24T010405
+INACTIVE,Xưởng 11 - Chuyền may 05,Factory 11 - Sewing line 05,24T010406
+INACTIVE,Xưởng 11 - Chuyền may 06,Factory 11 - Sewing line 06,24T010407
+INACTIVE,Xưởng 11 - Đóng gói,Factory 11 - Packing,24A090407
+INACTIVE,Xưởng 11 - In màu,Factory 11 - Color Print,21T010102
+INACTIVE,Xưởng 11 - In màu,Factory 11 - Color Print,24T010102
+INACTIVE,Xưởng 11 - Kiểm hàng may đồ chơi,Factory 11 - Toy Checking in line,24T010408
+INACTIVE,Xưởng 11 - May thủ công đồ chơi 01,Factory 11 - Toy Hand Sewing line 01,24T010301

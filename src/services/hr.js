@@ -1,37 +1,24 @@
-// Truy vấn DB HR — CHỈ ĐỌC VIEW (v_hr_*) theo phương án đã thống nhất.
-// View chỉ lộ cột cần thiết (mã, tên, phòng ban, giờ OT) — không lộ lương/CCCD/SĐT.
-import { hrQuery } from '../db/hr.js';
+// Truy vấn DB HR — UI/API CHỈ đọc SQLite (snapshot). Không gọi view trong request.
+// View (v_hr_*) chỉ được job snapshot đụng tới (xem hr-snapshot.js).
+import { ensureMasterData, getSnapshotDb } from './hr-snapshot.js';
 
-const EMP_TTL = 10 * 60 * 1000;
-let empCache = { t: 0, rows: null };
-let deptCache = { t: 0, rows: null };
-
+// Master data (nhân viên) — đọc từ SQLite; job làm mới mỗi 30 phút,
+// rỗng (lần deploy đầu) thì ensureMasterData kéo blocking 1 lần.
 export async function getEmployees() {
-  if (empCache.rows && Date.now() - empCache.t < EMP_TTL) return empCache.rows;
-  const rows = await hrQuery(`SELECT code, name, departID FROM v_hr_employee`);
-  empCache = { t: Date.now(), rows };
-  return rows;
+  await ensureMasterData();
+  return getSnapshotDb().prepare(`SELECT uID, code, name, departID, status FROM hr_employee`).all();
 }
 
 export async function getDepartments() {
-  if (deptCache.rows && Date.now() - deptCache.t < EMP_TTL) return deptCache.rows;
-  const rows = await hrQuery(`SELECT uID, code, name, engName FROM v_hr_department`);
-  deptCache = { t: Date.now(), rows };
-  return rows;
+  await ensureMasterData();
+  return getSnapshotDb().prepare(`SELECT uID, code, name, engName FROM hr_department`).all();
 }
 
-// Chấm công theo khoảng ngày [from, to] (bao gồm cả 2 đầu).
-// fdate trong view đã là yyyy-MM-dd nên so sánh chuỗi, tránh lệch múi giờ.
+// Chấm công theo khoảng ngày [from, to] — đọc từ SQLite snapshot (lazy backfill
+// tự kéo về từ view HR khi khoảng ngày chưa có). Tránh query thẳng bảng to.
+import { ensureRange as hrSnapshotRange } from './hr-snapshot.js';
 export async function getAttendanceRange(from, to) {
-  const toPlus = addDay(to, 1);
-  return hrQuery(
-    `SELECT fdate, empID, departID, otHours, overtimeMinutes,
-            onTime1, offTime1, onTime2, offTime2,
-            attendDays, dayType, CardList
-       FROM v_hr_ot_daily
-      WHERE fdate >= @from AND fdate < @toPlus`,
-    { from, toPlus }
-  );
+  return hrSnapshotRange(from, to);
 }
 
 export function addDay(iso, n = 1) {

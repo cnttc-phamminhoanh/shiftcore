@@ -24,6 +24,15 @@ export function formatMinutes(totalMinutes: number): string {
   return `${h}:${String(m).padStart(2, '0')}`;
 }
 
+// 31/10/2026: hiển thị TỔNG giờ dạng giờ thập phân (giống KPI) — dạng "H:MM"
+// với số lớn (vd 256769:00) khó theo dõi với người không chuyên.
+// 90 → "1.5", 206793.8 → "206793.8". Làm tròn 2 chữ số thập phân để giữ được
+// phút lẻ (vd 217 phút = 3.6166... → "3.62").
+export function formatHoursFromMinutes(totalMinutes: number): string {
+  const hours = Math.max(0, totalMinutes) / 60;
+  return hours.toFixed(2);
+}
+
 export function formatRatio(planOtMinutes: number, actualOtMinutes: number): string {
   if (planOtMinutes <= 0) return '—';
   return `${(actualOtMinutes / planOtMinutes).toFixed(2)}×`;

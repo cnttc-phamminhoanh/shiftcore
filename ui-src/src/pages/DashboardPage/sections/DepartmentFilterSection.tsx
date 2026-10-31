@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { LayoutGrid } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import DepartmentBadge, { getDepartmentBadgeMeta } from '@/components/DepartmentBadge';
+import { getDepartmentBadgeMeta } from '@/components/DepartmentBadge';
 import { Button } from '@/components/ui/button';
 import { DEPARTMENT_FILTER_OPTIONS, type DepartmentFilter } from '@/data/deptseries';
 
@@ -11,9 +11,8 @@ interface DepartmentFilterSectionProps {
   onChange: (value: DepartmentFilter) => void;
 }
 
-// Chips reuse the unified department identity: pastel tint + colored icon
-// when idle, solid department color when active. "All Departments" follows
-// the primary navy token.
+// Chips: neutral gray outline when idle; solid department color when the
+// user has selected the chip (selected state clearly highlighted).
 export default memo(function DepartmentFilterSection({
   selected,
   onChange,
@@ -57,7 +56,7 @@ export default memo(function DepartmentFilterSection({
               style={
                 isActive
                   ? { color: '#FFFFFF', backgroundColor: color, borderColor: color }
-                  : { color, backgroundColor: `${color}1A`, borderColor: `${color}40` }
+                  : { color: '#64748B', backgroundColor: '#FFFFFF', borderColor: '#CBD5E1' }
               }
             >
               <Icon className="size-[14px] shrink-0" aria-hidden />

@@ -7,11 +7,10 @@ import {
   subMonths,
 } from 'date-fns';
 
-// Default applied search window, recomputed from the current date on every
-// page load: the last 3 months counting back from today.
+// Mặc định: 3 tháng gần nhất.
 const now = new Date();
 export const SAMPLE_TO = format(now, 'yyyy-MM-dd');
-export const SAMPLE_FROM = format(subMonths(now, 3), 'yyyy-MM-dd');
+export const SAMPLE_FROM = format(subMonths(now, 2), 'yyyy-MM-dd');
 
 // The illustrative datasets were authored around a fixed anchor window
 // (2025-10-29 → 2025-10-31). shiftSampleDate re-anchors those sample dates

@@ -31,7 +31,7 @@ interface TooltipParam {
   dataIndex?: number;
 }
 
-// Plan hours demo: suy ra từ actual API (tỉ lệ mock, làm tròn chục).
+// Plan hours demo: suy ra tu actual API (ti le mock, lam tron chuc).
 const PLAN_RATIO: Record<string, number> = {
   CUT: 0.93, SEW: 0.92, EMB: 0.9, PRI: 0.9, FIN: 0.92, OTHER: 0.95, PAC: 0.94,
 };
@@ -74,7 +74,27 @@ export default memo(function DepartmentTrendSection({
 
   const option = useMemo<EChartsOption>(() => {
     const series = [
-      // Actual series first (stacked areas, solid lines, filled symbols).
+      // Plan series first (own stack, dashed lines, hollow symbols, no fill)
+      // — "kế hoạch trước, thực tế sau" like the KPI cards and the monthly
+      // chart next door.
+      ...departments.map((dept) => ({
+        id: `${dept}-plan`,
+        name: deptLabel(dept),
+        type: 'line' as const,
+        stack: 'plan',
+        data: visibleMonths.map((month) => planHoursFor(dept, month)),
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: { width: 1.5, type: 'dashed' as const, color: DEPARTMENT_COLORS[dept] },
+        itemStyle: {
+          color: '#FFFFFF',
+          borderColor: DEPARTMENT_COLORS[dept],
+          borderWidth: 1.5,
+        },
+        emphasis: { focus: 'series' as const },
+        z: 3,
+      })),
+      // Actual series second (stacked areas, solid lines, filled symbols).
       ...departments.map((dept) => ({
         id: `${dept}-actual`,
         name: deptLabel(dept),
@@ -93,24 +113,6 @@ export default memo(function DepartmentTrendSection({
         // No area fill below the lines (per user request) — lines only.
         emphasis: { focus: 'series' as const },
         z: 2,
-      })),
-      // Plan series second (own stack, dashed lines, hollow symbols, no fill).
-      ...departments.map((dept) => ({
-        id: `${dept}-plan`,
-        name: deptLabel(dept),
-        type: 'line' as const,
-        stack: 'plan',
-        data: visibleMonths.map((month) => planHoursFor(dept, month)),
-        symbol: 'circle',
-        symbolSize: 6,
-        lineStyle: { width: 1.5, type: 'dashed' as const, color: DEPARTMENT_COLORS[dept] },
-        itemStyle: {
-          color: '#FFFFFF',
-          borderColor: DEPARTMENT_COLORS[dept],
-          borderWidth: 1.5,
-        },
-        emphasis: { focus: 'series' as const },
-        z: 3,
       })),
     ];
 
@@ -143,8 +145,8 @@ export default memo(function DepartmentTrendSection({
             `<span style="font-weight:600;color:#0F172A;">${deptLabel(dept)}</span>` +
             `<span style="color:#64748B;font-size:11px;">${monthLabel(month)}</span>` +
             `</div>` +
-            row(t('common.actual'), actual, !isPlan) +
             row(t('common.plan'), plan, isPlan) +
+            row(t('common.actual'), actual, !isPlan) +
             `</div>`
           );
         },
@@ -233,17 +235,18 @@ export default memo(function DepartmentTrendSection({
               <Clock className="size-5 text-primary" />
               {t('chart.processTimeTrend')}
           </CardTitle>
-          {/* Line-style legend: solid = actual, dashed = plan */}
+          {/* Line-style legend: dashed = plan, solid = actual — plan first
+              to match the KPI cards and the monthly chart */}
           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block h-0 w-5 border-t-2 border-solid border-foreground/60" />
-              <span className="inline-block size-2 rounded-full bg-foreground/60" />
-              {t('chart.actualTimeSeries')}
-            </span>
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-0 w-5 border-t-2 border-dashed border-foreground/60" />
               <span className="inline-block size-2 rounded-full border-[1.5px] border-foreground/60 bg-white" />
               {t('chart.planTimeSeries')}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-0 w-5 border-t-2 border-solid border-foreground/60" />
+              <span className="inline-block size-2 rounded-full bg-foreground/60" />
+              {t('chart.actualTimeSeries')}
             </span>
           </div>
         </div>

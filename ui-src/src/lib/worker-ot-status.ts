@@ -1,4 +1,4 @@
-// EXPORTS: WorkerOtAlertStatus, getWorkerOtAlertStatus, aggregateWorkerOtSpikes, queryWorkerOtSpikes, formatOtMinutes, WORKER_OT_ALERT_COLORS, SPIKE_DEPARTMENT_GROUPS, countWorkerOtSpikesByDepartment, OTWorkerAlertLevel, OT_WORKER_ALERT_COLORS, getOTWorkerAlert
+// EXPORTS: WorkerOtAlertStatus, getWorkerOtAlertStatus, aggregateWorkerOtSpikes, aggregateWorkerOtPlanSpikes, queryWorkerOtSpikes, formatOtMinutes, WORKER_OT_ALERT_COLORS, SPIKE_DEPARTMENT_GROUPS, countWorkerOtSpikesByDepartment, OTWorkerAlertLevel, OT_WORKER_ALERT_COLORS, getOTWorkerAlert
 import type { IWorkerOtRecord } from '@/data/otrecords';
 
 // Absolute actual-OT bands per worker per working day (confirmed rule):
@@ -74,16 +74,18 @@ export function formatOtMinutes(minutes: number): string {
 // sample-data implementation of the exact same rule.
 const SPIKE_OT_THRESHOLD_MINUTES = 240;
 
-// Aggregates spike-overtime worker-days for the per-worker chart:
-//   1. Verified actual OT is summed per worker per working day (overnight
+// Shared per-worker-per-day aggregation used by BOTH the actual and the
+// planned OT >= 4h views of the by-department chart:
+//   1. The picked OT field is summed per worker per working day (overnight
 //      shifts included) — a worker-day is never duplicated.
-//   2. ONLY cases with ActualOT >= 4h are returned (4.00h included,
-//      3.99h excluded). OT across multiple days is never summed for the
+//   2. ONLY cases with OT >= 4h are returned (4.00h included, 3.99h
+//      excluded). OT across multiple days is never summed for the
 //      threshold — each day is judged on its own.
-//   3. OT is never inferred from the last IGM scan.
+//   3. OT is never inferred from scan records.
 //   4. Rows are sorted by OT desc (then date desc, then workerNo).
-export function aggregateWorkerOtSpikes(
-  records: IWorkerOtRecord[]
+function aggregateWorkerOtRows(
+  records: IWorkerOtRecord[],
+  pick: (record: IWorkerOtRecord) => number
 ): IWorkerOtSpikeRow[] {
   const acc = new Map<string, IWorkerOtSpikeRow>();
 
@@ -95,10 +97,7 @@ export function aggregateWorkerOtSpikes(
     ) {
       continue; // malformed row — skipped, never guessed
     }
-    const minutes =
-      typeof record.actualOtMinutes === 'number' && record.actualOtMinutes > 0
-        ? record.actualOtMinutes
-        : 0;
+    const minutes = pick(record);
     if (minutes <= 0) continue; // unverified / missing — not treated as 0h OT
 
     // One row per worker per working day; same-day segments are summed.
@@ -125,6 +124,34 @@ export function aggregateWorkerOtSpikes(
         b.workDate.localeCompare(a.workDate) ||
         a.workerNo.localeCompare(b.workerNo)
     );
+}
+
+// ACTUAL OT >= 4h worker-days — the "thực tế" bar and the alert metric.
+export function aggregateWorkerOtSpikes(
+  records: IWorkerOtRecord[]
+): IWorkerOtSpikeRow[] {
+  return aggregateWorkerOtRows(
+    records,
+    (record) =>
+      typeof record.actualOtMinutes === 'number' && record.actualOtMinutes > 0
+        ? record.actualOtMinutes
+        : 0
+  );
+}
+
+// PLANNED (registered) OT >= 4h worker-days — the "kế hoạch" companion bar
+// of the by-department chart, judged with the exact same 4h/day rule so
+// plan and actual stay directly comparable.
+export function aggregateWorkerOtPlanSpikes(
+  records: IWorkerOtRecord[]
+): IWorkerOtSpikeRow[] {
+  return aggregateWorkerOtRows(
+    records,
+    (record) =>
+      typeof record.planOtMinutes === 'number' && record.planOtMinutes > 0
+        ? record.planOtMinutes
+        : 0
+  );
 }
 
 // Paginated spike query for the detail dialog: applies a case-insensitive
@@ -165,8 +192,8 @@ export function queryWorkerOtSpikes(
   };
 }
 
-// The seven fixed department groups of the by-department spike chart. Every
-// department outside the six named production groups falls into 'OTHER'
+// The eight fixed department groups of the by-department spike chart. Every
+// department outside the seven named production groups falls into 'OTHER'
 // ("Khác"), which is why the bucket list never grows with the data.
 export const SPIKE_DEPARTMENT_GROUPS = [
   'CUT',
@@ -175,6 +202,7 @@ export const SPIKE_DEPARTMENT_GROUPS = [
   'PRI',
   'FIN',
   'PAC',
+  'SOC',
   'OTHER',
 ] as const;
 
@@ -225,100 +253,4 @@ export function getOTWorkerAlert(count: number | null | undefined): {
     return { level: 'high', color: OT_WORKER_ALERT_COLORS.high };
   }
   return { level: 'critical', color: OT_WORKER_ALERT_COLORS.critical };
-}
-
-export interface IDepartmentSpikeBucket {
-  department: SpikeDepartmentGroup;
-  // Worker-day cases (one worker counted at most once per working day) —
-  // NOT the number of unique workers.
-  workerDays: number;
-  uniqueWorkers: number;
-  // Workers with actual OT >= 4h on the department's worst single day in the
-  // selected range. The bar height AND the threshold color are both judged
-  // against this per-day number — multi-day totals never drive the alert
-  // level, so a whole-month sum is never compared with a one-day threshold.
-  maxDailyWorkers: number;
-  // The worst day inside the range ('' when the department has no cases).
-  peakDate: string;
-  // Threshold alert computed from maxDailyWorkers (see getOTWorkerAlert).
-  alert: { level: OTWorkerAlertLevel; color: string };
-}
-
-export interface IDepartmentSpikeStats {
-  buckets: IDepartmentSpikeBucket[]; // always the 7 fixed groups, in order
-  totalWorkerDays: number;
-  uniqueWorkers: number;
-  activeDepartments: number;
-}
-
-// Counts verified spike worker-days (actual OT >= 4h per worker per working
-// day) per department group. It reuses the exact same per-worker-per-day
-// aggregation as the spike chart, so both views can never disagree: same-day
-// segments are summed BEFORE the 4h threshold is applied, and each worker is
-// counted at most once per day.
-// For the alert coloring the workers are additionally counted PER DEPARTMENT
-// PER DAY: each bucket carries the worst single day (maxDailyWorkers +
-// peakDate) and the threshold status derived from it — never the range
-// total. In production this aggregation runs on the Node.js backend — the
-// React layer only calls the endpoint and renders the response, never
-// recomputing the OT business rules itself.
-export function countWorkerOtSpikesByDepartment(
-  records: IWorkerOtRecord[]
-): IDepartmentSpikeStats {
-  const rows = aggregateWorkerOtSpikes(records);
-  const acc = new Map<
-    SpikeDepartmentGroup,
-    { workerDays: number; workers: Set<string>; daily: Map<string, number> }
-  >();
-  for (const group of SPIKE_DEPARTMENT_GROUPS) {
-    acc.set(group, { workerDays: 0, workers: new Set(), daily: new Map() });
-  }
-  const allWorkers = new Set<string>();
-
-  for (const row of rows) {
-    const group = (
-      SPIKE_DEPARTMENT_GROUPS as readonly string[]
-    ).includes(row.department)
-      ? (row.department as SpikeDepartmentGroup)
-      : 'OTHER'; // departments outside CUT/SEW/EMB/PRI/FIN/PAC
-    const bucket = acc.get(group)!;
-    bucket.workerDays += 1;
-    bucket.workers.add(row.workerNo);
-    bucket.daily.set(row.workDate, (bucket.daily.get(row.workDate) ?? 0) + 1);
-    allWorkers.add(row.workerNo);
-  }
-
-  const buckets: IDepartmentSpikeBucket[] = SPIKE_DEPARTMENT_GROUPS.map(
-    (department) => {
-      const accBucket = acc.get(department)!;
-      // Worst single day: highest per-day count, earliest date wins ties so
-      // the result is deterministic. With a single-day filter this is exactly
-      // that day's worker count.
-      let maxDailyWorkers = 0;
-      let peakDate = '';
-      for (const [date, count] of Array.from(
-        accBucket.daily.entries()
-      ).sort((a, b) => a[0].localeCompare(b[0]))) {
-        if (count > maxDailyWorkers) {
-          maxDailyWorkers = count;
-          peakDate = date;
-        }
-      }
-      return {
-        department,
-        workerDays: accBucket.workerDays,
-        uniqueWorkers: accBucket.workers.size,
-        maxDailyWorkers,
-        peakDate,
-        alert: getOTWorkerAlert(maxDailyWorkers),
-      };
-    }
-  );
-
-  return {
-    buckets,
-    totalWorkerDays: rows.length,
-    uniqueWorkers: allWorkers.size,
-    activeDepartments: buckets.filter((bucket) => bucket.workerDays > 0).length,
-  };
 }

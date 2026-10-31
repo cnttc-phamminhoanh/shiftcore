@@ -8,3 +8,4 @@ dist/
 sql/
 .env.example
 README.md
+AI_GUIDE.md

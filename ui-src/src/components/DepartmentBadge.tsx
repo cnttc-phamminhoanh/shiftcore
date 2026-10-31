@@ -4,6 +4,7 @@ import {
   Box,
   Cog,
   Flower,
+  Footprints,
   Package,
   Printer,
   Scissors,
@@ -26,10 +27,13 @@ export const DEPARTMENT_BADGE_META: Record<string, DepartmentBadgeMeta> = {
   EMB: { color: '#F97316', icon: Flower, label: 'EMB' },
   PRN: { color: '#9333EA', icon: Printer, label: 'PRN' },
   PRI: { color: '#9333EA', icon: Printer, label: 'PRI' },
-  FIN: { color: '#F43F5E', icon: Box, label: 'FIN' },
+  // 31/10/2026: FIN đổi từ hồng-đỏ (#F43F5E) sang teal (#14B8A6) — màu đỏ
+  // dễ bị hiểu nhầm là cảnh báo/nguy hiểm (đồng bộ với chart-colors.ts).
+  FIN: { color: '#14B8A6', icon: Box, label: 'FIN' },
   OTHER: { color: '#475569', icon: Cog, label: 'Other' },
   PAK: { color: '#06B6D4', icon: Package, label: 'PAK' },
   PAC: { color: '#06B6D4', icon: Package, label: 'PAC' },
+  SOC: { color: '#D97706', icon: Footprints, label: 'SOC' },
 };
 
 const FALLBACK_META: DepartmentBadgeMeta = {

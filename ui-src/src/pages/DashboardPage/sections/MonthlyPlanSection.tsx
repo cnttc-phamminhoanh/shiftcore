@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   filterDepartments,
-  MONTH_LABELS,
   type DepartmentFilter,
 } from '@/data/deptseries';
 import type { IDepartmentTrendData } from '@/data/departmenttrenddata';

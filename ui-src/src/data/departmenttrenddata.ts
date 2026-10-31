@@ -2,7 +2,7 @@
 export interface IDepartmentTrendData {
   id: string
   month: string
-  department: 'CUT' | 'SEW' | 'EMB' | 'PRI' | 'FIN' | 'OTHER' | 'PAC'
+  department: 'CUT' | 'SEW' | 'EMB' | 'PRI' | 'FIN' | 'PAC' | 'SOC' | 'OTHER'
   hours: number
 }
 

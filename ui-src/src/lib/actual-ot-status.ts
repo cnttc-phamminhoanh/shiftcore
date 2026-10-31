@@ -4,9 +4,10 @@
 // thresholds (workers W, search days D, plan OT P, actual OT A):
 //   green  — A <  P + W * 0.5  * D  (within the expected OT envelope)
 //   yellow — A >= P + W * 0.5  * D  and A <  P + W * 0.75 * D
-//   orange — A >= P + W * 0.75 * D  and A <= P + W * 1    * D
-//   red    — A >  P + W * 1    * D
-// The bands are continuous: no gaps and no overlaps.
+//   orange — A >= P + W * 0.75 * D  and A <  P + W * 1    * D
+//   red    — A >= P + W * 1    * D
+// The bands are continuous: no gaps and no overlaps (đỏ tính từ mốc
+// W*1*D trở lên — theo đúng công thức user 31/10/2026).
 // Neutral covers missing / loading / invalid input (non-finite numbers,
 // negative workers or OT values, or searchDays <= 0) so the card never shows
 // a wrong warning while data is unavailable.
@@ -40,7 +41,7 @@ export function getActualOTStatus(
   const redThreshold = plan + workers * 1 * days;
 
   const actual = actualOT as number;
-  if (actual > redThreshold) return 'red';
+  if (actual >= redThreshold) return 'red';
   if (actual >= orangeThreshold) return 'orange';
   if (actual >= yellowThreshold) return 'yellow'; 
 

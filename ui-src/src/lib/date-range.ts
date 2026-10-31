@@ -1,8 +1,6 @@
 // EXPORTS: isDateInRange, monthsInRange, MONTH_PERIODS
 import { endOfMonth, format, startOfMonth, subMonths } from 'date-fns';
 
-import { MONTH_LABELS } from '@/data/deptseries';
-
 // Calendar period covered by each sample-data month label (ISO yyyy-mm-dd).
 // The three labels track the three calendar months ending with the current
 // month, so they always intersect the rolling 3-month default search window.
@@ -28,12 +26,17 @@ export function isDateInRange(date: string, from: string, to: string): boolean {
 }
 
 // Month labels whose calendar period intersects the selected date range.
+// Sinh động theo from..to: Month 1..Month 12.
 export function monthsInRange(from: string, to: string): string[] {
-  return MONTH_LABELS.filter((label) => {
-    const period = MONTH_PERIODS[label];
-    if (!period) return true;
-    if (from && period.end < from) return false;
-    if (to && period.start > to) return false;
-    return true;
-  });
+  const out: string[] = [];
+  if (!from || !to) return out;
+  const [fy, fm] = from.split('-').map(Number);
+  const [ty, tm] = to.split('-').map(Number);
+  let y = fy, m = fm;
+  while (y < ty || (y === ty && m <= tm)) {
+    out.push(`Month ${m}`);
+    m++;
+    if (m > 12) { m = 1; y++; }
+  }
+  return out;
 }

@@ -14,6 +14,8 @@ export async function getHrPool() {
     database: config.hr.database,
     user: config.hr.user,
     password: config.hr.password,
+    connectionTimeout: 15000,
+    requestTimeout: 120000,
     options: {
       encrypt: false,
       trustServerCertificate: true,
@@ -27,12 +29,23 @@ export async function getHrPool() {
   return pool;
 }
 
-// Chỉ dùng SQL tham số hoá (@param) — chống SQL injection.
-export async function hrQuery(text, params = {}) {
+async function runOnce(text, params) {
   const request = (await getHrPool()).request();
   for (const [k, v] of Object.entries(params)) {
     request.input(k, v);
   }
   const result = await request.query(text);
   return result.recordset;
+}
+
+// Chỉ dùng SQL tham số hoá (@param) — chống SQL injection.
+export async function hrQuery(text, params = {}) {
+  try {
+    return await runOnce(text, params);
+  } catch (e) {
+    console.warn('[hr] ket noi loi, reset pool va thu lai:', e.message);
+    try { pool && pool.close(); } catch { /* empty */ }
+    pool = null;
+    return runOnce(text, params);
+  }
 }

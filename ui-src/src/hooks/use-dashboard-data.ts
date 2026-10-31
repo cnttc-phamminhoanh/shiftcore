@@ -1,5 +1,7 @@
-// Hook tải toàn bộ dữ liệu dashboard từ /api/* (cùng origin với server).
+// Hook tải dữ liệu dashboard từ /api/* (cùng origin với server).
 // Tải lại khi [from, to] đổi; lỗi fetch được giữ lại để UI hiển thị.
+// Bảng chi tiết (records/process-rollup) KHÔNG tải toàn bộ ở đây nữa — mỗi
+// tab tự gọi API phân trang/lọc server-side (30/10/2026).
 import { useEffect, useState } from 'react';
 
 import { api, type DateRange } from '@/lib/api-client';
@@ -7,14 +9,12 @@ import type { IDailySummary } from '@/data/dailysummarydata';
 import type { IKpiData } from '@/data/kpidata';
 import type { IMonthlyData } from '@/data/monthlydata';
 import type { IDepartmentTrendData } from '@/data/departmenttrenddata';
-import type { IWorkerOtRecord } from '@/data/otrecords';
 
 export interface DashboardData {
   cards: IKpiData[];
   monthly: IMonthlyData[];
   deptTrend: IDepartmentTrendData[];
   daily: IDailySummary[];
-  records: IWorkerOtRecord[];
   loading: boolean;
   error: string | null;
 }
@@ -24,7 +24,6 @@ const INITIAL: DashboardData = {
   monthly: [],
   deptTrend: [],
   daily: [],
-  records: [],
   loading: true,
   error: null,
 };
@@ -41,16 +40,14 @@ export function useDashboardData(range: DateRange): DashboardData {
       api.monthly(range),
       api.departmentTrend(range),
       api.daily(range, 'all'),
-      api.records(range, { dept: 'all' }),
     ])
-      .then(([k, m, dt, d, r]) => {
+      .then(([k, m, dt, d]) => {
         if (!alive) return;
         setState({
           cards: k.cards,
           monthly: m.rows,
           deptTrend: dt.rows as unknown as IDepartmentTrendData[],
           daily: d.rows,
-          records: r.rows,
           loading: false,
           error: null,
         });

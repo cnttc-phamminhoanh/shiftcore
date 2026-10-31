@@ -6,43 +6,38 @@ import { toast } from 'sonner';
 
 import type { DepartmentFilter } from '@/data/deptseries';
 import type { WorkerOtAlertStatus } from '@/lib/worker-ot-status';
+import { useDashboardData } from '@/hooks/use-dashboard-data';
 import {
   SAMPLE_FROM,
   SAMPLE_TO,
   computeSearchDays,
 } from '@/lib/sample-period';
-import { useDashboardData } from '@/hooks/use-dashboard-data';
 import DashboardHeaderSection from './sections/DashboardHeaderSection';
 import KpiCardsSection from './sections/KpiCardsSection';
 import DepartmentFilterSection from './sections/DepartmentFilterSection';
 import MonthlyPlanSection from './sections/MonthlyPlanSection';
 import DepartmentTrendSection from './sections/DepartmentTrendSection';
-import WorkerOTByDepartmentSection from './sections/WorkerOTByDepartmentSection';
 import DailySummarySection from './sections/DailySummarySection';
 
 export default function DashboardPage() {
   const { t } = useTranslation();
   const [department, setDepartment] = useState<DepartmentFilter>('all');
-  // Applied search window, committed from the header's draft date inputs.
-  // Its day count feeds the Actual OT warning thresholds, so applying a new
-  // range recomputes the card colour automatically.
   const [dateFrom, setDateFrom] = useState(SAMPLE_FROM);
   const [dateTo, setDateTo] = useState(SAMPLE_TO);
   const searchDays = useMemo(
     () => computeSearchDays(dateFrom, dateTo),
     [dateFrom, dateTo]
   );
-
-  // Dữ liệu từ backend /api (DEMO=1 → số mẫu; DEMO=0 → số DB thật).
-  const { cards, monthly, deptTrend, daily, records, error } =
-    useDashboardData({ from: dateFrom, to: dateTo });
-  // Drill-down from the by-department spike-OT chart into the per-worker
-  // detail table (department + red absolute-OT status), cleared via the
-  // banner chip.
   const [otDrillDown, setOtDrillDown] = useState<{
     department: string;
     status: WorkerOtAlertStatus;
   } | null>(null);
+
+  // Du lieu dashboard tu API Node.js (hoac DEMO mock khi .env DEMO=1)
+  const { cards, monthly, deptTrend, daily, loading, error } = useDashboardData({
+    from: dateFrom,
+    to: dateTo,
+  });
 
   const handleDrillDown = (department: string, status: WorkerOtAlertStatus) => {
     setOtDrillDown((prev) =>
@@ -50,7 +45,6 @@ export default function DashboardPage() {
         ? prev
         : { department, status }
     );
-    // Bring the filtered per-worker table into view.
     window.setTimeout(() => {
       document
         .getElementById('ot-worker-detail')
@@ -58,9 +52,6 @@ export default function DashboardPage() {
     }, 60);
   };
 
-  // Applying a range updates the shared search window (warning thresholds
-  // recompute) and reminds the user that row-level figures are illustrative
-  // sample data until the production API is connected.
   const handleApplyRange = (from: string, to: string) => {
     setDateFrom(from);
     setDateTo(to);
@@ -74,15 +65,23 @@ export default function DashboardPage() {
         dateTo={dateTo}
         onApplyRange={handleApplyRange}
       />
-      <main className="w-full space-y-5 px-4 py-5 md:space-y-8 md:px-6 md:py-8 lg:px-8">
-        <KpiCardsSection searchDays={searchDays} cards={cards} />
-        {error && (
-          <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            Lỗi tải dữ liệu: {error}
+      <main className="mx-auto w-full max-w-[90rem] space-y-5 px-4 py-5 md:space-y-8 md:px-6 md:py-8 lg:px-8">
+        {error ? (
+          <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {t('common.apiError')}
           </div>
-        )}
+        ) : null}
+        {loading ? (
+          // Overlay loading cố định GIỮA màn hình — spinner to, rõ; không chặn click/scroll
+          <div className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center">
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-lg">
+              <span className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-slate-800" />
+              <span className="text-base font-semibold text-slate-800">{t('common.loading')}</span>
+            </div>
+          </div>
+        ) : null}
+        <KpiCardsSection searchDays={searchDays} cards={cards} />
         <DepartmentFilterSection selected={department} onChange={setDepartment} />
-        {/* Charts share one row on everything above mobile; stack only <md */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
           <MonthlyPlanSection
             selected={department}
@@ -98,16 +97,6 @@ export default function DashboardPage() {
             deptTrend={deptTrend}
           />
         </div>
-        {/* Worker-days with actual OT >= 4h per department — always the 7
-            fixed groups (CUT..PAC + Other), bar colors synced with the
-            department badges, bar click drills the per-worker detail table */}
-        <WorkerOTByDepartmentSection
-          selected={department}
-          dateFrom={dateFrom}
-          dateTo={dateTo}
-          onDrillDown={handleDrillDown}
-          records={records}
-        />
         <div id="ot-worker-detail" className="scroll-mt-4">
           <DailySummarySection
             selected={department}
@@ -116,12 +105,8 @@ export default function DashboardPage() {
             drillDown={otDrillDown}
             onClearDrillDown={() => setOtDrillDown(null)}
             daily={daily}
-            records={records}
           />
         </div>
-        <p className="pb-2 text-center text-xs text-muted-foreground">
-          {t('common.sampleDataFooter')}
-        </p>
       </main>
     </div>
   );

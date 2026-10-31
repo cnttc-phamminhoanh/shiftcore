@@ -2,14 +2,7 @@ import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AlarmClock,
-  BarChart3,
-  Braces,
-  CalendarCheck,
-  CircleCheck,
   Clock,
-  TrendingDown,
-  TrendingUp,
-  TriangleAlert,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -17,18 +10,13 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Image } from '@/components/ui/image';
 import type { IKpiData } from '@/data/kpidata';
-import {
-  getActualOTStatus,
-  getOTDifferencePercent,
-  type ActualOtStatus,
-} from '@/lib/actual-ot-status';
+import { getActualOTStatus, type ActualOtStatus } from '@/lib/actual-ot-status';
 import { cn } from '@/lib/utils';
 
 const KPI_ICONS: Record<string, LucideIcon> = {
   'Worker Count': Users,
   'Total OT (Plan)': Clock,
   'Actual OT': AlarmClock,
-  'IGM OT': CalendarCheck,
 };
 
 // Per-KPI pastel visual identity: card gradient, matching border,
@@ -73,13 +61,6 @@ const KPI_VISUALS: Record<string, KpiVisual> = {
   },
   // 'Actual OT' visuals are driven by ACTUAL_OT_STATUS_VISUALS below,
   // based on the actual-vs-plan ratio — not a fixed palette.
-  'IGM OT': {
-    gradient: 'linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%)',
-    border: '#E9D5FF',
-    iconGradient: 'linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)',
-    circle: 'rgba(124, 58, 237, 0.08)',
-    valueColor: 'hsl(222 47% 11%)',
-  },
 };
 
 const FALLBACK_VISUAL: KpiVisual = KPI_VISUALS['Total OT (Plan)']!;
@@ -171,71 +152,18 @@ const ACTUAL_OT_STATUS_VISUALS: Record<ActualOtStatus, KpiStatusVisual> = {
   },
 };
 
-// Alert banner styling + copy per status (mockups): red — solid white strip
-// with dark text; orange — translucent strip with a divider, "large
-// deviation" copy; yellow — lighter translucent strip, "small deviation".
-interface AlertBannerStyle {
-  strip: string;
-  icon: string;
-  divider?: string;
-  title: string;
-  desc: string;
-  titleKey: string;
-  // Description key; the orange/yellow variants interpolate over-plan
-  // hours, red uses its fixed copy.
-  descKey: string;
-}
-const ALERT_BANNER_STYLES: Record<ActualOtStatus, AlertBannerStyle | null> = {
-  red: {
-    strip: 'bg-white shadow-sm',
-    icon: 'bg-destructive',
-    title: 'text-foreground',
-    desc: 'text-muted-foreground',
-    titleKey: 'kpi.alertHighTitle',
-    descKey: 'kpi.alertHighDesc',
-  },
-  orange: {
-    strip: 'bg-white shadow-sm',
-    icon: 'bg-orange-500',
-    divider: 'bg-foreground/10',
-    title: 'text-foreground',
-    desc: 'text-muted-foreground',
-    titleKey: 'kpi.deviationLargeTitle',
-    descKey: 'kpi.deviationDesc',
-  },
-  yellow: {
-    strip: 'bg-white shadow-sm',
-    icon: 'bg-amber-500',
-    divider: 'bg-foreground/10',
-    title: 'text-foreground',
-    desc: 'text-muted-foreground',
-    titleKey: 'kpi.deviationSmallTitle',
-    descKey: 'kpi.deviationDesc',
-  },
-  green: {
-    // Within-plan banner (per the green mockup): translucent mint strip,
-    // green check-circle icon, green bold title + muted description.
-    strip: 'border border-success/15 bg-success/10',
-    icon: 'bg-success',
-    title: 'text-success',
-    desc: 'text-muted-foreground',
-    titleKey: 'kpi.withinPlanTitle',
-    descKey: 'kpi.withinPlanDesc',
-  },
-  neutral: null,
-};
 // Maps KPI data titles to translation keys (business data stays untouched).
 const KPI_TITLE_KEYS: Record<string, string> = {
   'Worker Count': 'kpi.workerCount',
   'Total OT (Plan)': 'kpi.totalOTPlan',
   'Actual OT': 'kpi.actualOT',
-  'IGM OT': 'kpi.igmOT',
 };
 
 interface KpiCardsSectionProps {
   // Inclusive day count of the applied search range; drives the warning
   // thresholds (plan OT + workers × factor × searchDays).
   searchDays: number;
+  // Cards du lieu tu API (3 the: Worker Count, Plan OT, Actual OT).
   cards: IKpiData[];
 }
 
@@ -243,12 +171,18 @@ export default memo(function KpiCardsSection({
   searchDays,
   cards,
 }: KpiCardsSectionProps) {
-  const { t, i18n } = useTranslation();
-  const locale = i18n.language;
+  const { t } = useTranslation();
 
-  const PLAN_OT_VALUE = cards.find((k) => k.title === 'Total OT (Plan)')?.value;
-  const ACTUAL_OT_VALUE = cards.find((k) => k.title === 'Actual OT')?.value;
-  const WORKER_COUNT_VALUE = cards.find((k) => k.title === 'Worker Count')?.value;
+  const KPI_CARDS = cards;
+  const PLAN_OT_VALUE = KPI_CARDS.find(
+    (kpi) => kpi.title === 'Total OT (Plan)'
+  )?.value;
+  const ACTUAL_OT_VALUE = KPI_CARDS.find(
+    (kpi) => kpi.title === 'Actual OT'
+  )?.value;
+  const WORKER_COUNT_VALUE = KPI_CARDS.find(
+    (kpi) => kpi.title === 'Worker Count'
+  )?.value;
 
   // Warning tier of the Actual OT card, recomputed automatically whenever
   // the applied search range (searchDays) or the KPI data changes.
@@ -260,24 +194,12 @@ export default memo(function KpiCardsSection({
         WORKER_COUNT_VALUE,
         searchDays
       ),
-    [searchDays]
+    [searchDays, ACTUAL_OT_VALUE, PLAN_OT_VALUE, WORKER_COUNT_VALUE]
   );
-  // Deviation % vs plan — display only (null when plan OT is 0/missing so
-  // the card never shows Infinity/NaN).
-  const otDifferencePercent = useMemo(
-    () => getOTDifferencePercent(ACTUAL_OT_VALUE, PLAN_OT_VALUE),
-    []
-  );
-  // Alert states (yellow/orange/red) show the deviation pill + banner.
-  const isActualOtAlert = ['yellow', 'orange', 'red'].includes(actualOtStatus);
-  // Absolute over-plan hours, used by the deviation banner description.
-  const otOverHours =
-    ACTUAL_OT_VALUE != null && PLAN_OT_VALUE != null
-      ? ACTUAL_OT_VALUE - PLAN_OT_VALUE
-      : 0;
+  // Deviation % vs plan — no longer displayed (banners removed).
   return (
-    <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {cards.map((kpi) => {
+    <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {KPI_CARDS.map((kpi) => {
         const Icon = KPI_ICONS[kpi.title] ?? Clock;
         // The Actual OT card is the status card: its palette follows the
         // actual-vs-plan ratio (green/yellow/orange/red), per business rule.
@@ -395,198 +317,10 @@ export default memo(function KpiCardsSection({
                 >
                   {kpi.value}
                 </div>
-                {/* Deviation pill (per confirmed formula): white capsule with
-                    an arrow + bold percent vs plan, caption below. Shown on
-                    alert states (red when over plan) and on the green
-                    within-plan state (green text, per the mint mockup). */}
-                {isActualOt && (isActualOtAlert || actualOtStatus === 'green') && (
-                  <div className="flex min-w-0 flex-col items-start gap-1">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-sm">
-                      {otDifferencePercent === null ? (
-                        // planOT = 0 → skip the division; show a neutral
-                        // label instead of Infinity/NaN (per spec).
-                        <span className="text-sm font-bold text-muted-foreground">
-                          {t('kpi.noPlanOt')}
-                        </span>
-                      ) : (
-                        <>
-                          {isActualOtAlert && otDifferencePercent >= 0 ? (
-                            <TrendingUp
-                              className="size-3.5 text-destructive"
-                              aria-hidden
-                            />
-                          ) : otDifferencePercent < 0 ? (
-                            <TrendingDown
-                              className="size-3.5 text-success"
-                              aria-hidden
-                            />
-                          ) : null}
-                          <span
-                            className={cn(
-                              'text-sm font-bold tabular-nums',
-                              isActualOtAlert && otDifferencePercent >= 0
-                                ? 'text-destructive'
-                                : 'text-success'
-                            )}
-                          >
-                            {otDifferencePercent > 0
-                              ? `+${otDifferencePercent}%`
-                              : `${otDifferencePercent}%`}
-                          </span>
-                        </>
-                      )}
-                    </span>
-                    <span
-                      className="text-[11px] leading-snug"
-                      style={{ color: visual.subtitleColor ?? '#64748B' }}
-                    >
-                      {t('kpi.vsPlan')}
-                    </span>
-                  </div>
-                )}
               </div>
-              {/* Flexible spacer: absorbs leftover height so the bottom
-                  banner of every card sits on the same baseline across the
-                  equal-height grid row (banners align horizontally). */}
+              {/* Flexible spacer: absorbs leftover height so cards in the
+                  equal-height grid row stay aligned. */}
               <div className="min-h-3 flex-1" aria-hidden />
-              {/* Worker-count sub-banner (per pink mockup): translucent
-                  glassy strip with a pink users circle icon, thin pink divider
-                  and muted gray text. Shared min-height keeps all 4 strips
-                  equally tall. */}
-              {kpi.title === 'Worker Count' && (
-                <div
-                  className="mt-3 flex min-h-[46px] items-center gap-2.5 rounded-lg px-3 py-2"
-                  style={{ backgroundColor: 'rgba(249, 198, 217, 0.35)' }}
-                >
-                  <span
-                    className="flex size-6 shrink-0 items-center justify-center rounded-full shadow-sm"
-                    style={{ backgroundColor: '#EC6F9E' }}
-                  >
-                    <Users className="size-3.5 text-white" aria-hidden />
-                  </span>
-                  <span
-                    className="h-4 w-px shrink-0"
-                    style={{ backgroundColor: 'rgba(236, 111, 158, 0.35)' }}
-                    aria-hidden
-                  />
-                  <div className="text-[11px] font-medium leading-snug text-muted-foreground">
-                    {t('kpi.workerScope')}
-                  </div>
-                </div>
-              )}
-              {/* IGM OT sub-banner (per mockup): soft lavender strip with a
-                  purple circle icon holding a white code-braces symbol and
-                  deep purple text ("recorded from IGM" scope note). */}
-              {kpi.title === 'IGM OT' && (
-                <div
-                  className="mt-3 flex min-h-[46px] items-center gap-2.5 rounded-lg border px-3 py-2"
-                  style={{
-                    backgroundColor: '#F9EFFF',
-                    borderColor: '#F3D9FF',
-                  }}
-                >
-                  <span
-                    className="flex size-6 shrink-0 items-center justify-center rounded-full shadow-sm"
-                    style={{ backgroundColor: '#C774E0' }}
-                  >
-                    <Braces className="size-3.5 text-white" aria-hidden />
-                  </span>
-                  <div
-                    className="text-[11px] font-medium leading-snug"
-                    style={{ color: '#9D4EDD' }}
-                  >
-                    {t('kpi.igmScope')}
-                  </div>
-                </div>
-              )}
-              {/* Plan-card sub-banner (per mockup): soft blue nested strip
-                  with a bar-chart circle icon, bold "per plan" title and an
-                  "approved" description. */}
-              {kpi.title === 'Total OT (Plan)' && (
-                <div className="mt-3 flex min-h-[46px] items-center gap-2.5 rounded-lg border border-info/15 bg-white/60 px-3 py-2">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-info shadow-sm">
-                    <BarChart3 className="size-3.5 text-info-foreground" aria-hidden />
-                  </span>
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold leading-snug text-foreground">
-                      {t('kpi.planBadgeTitle')}
-                    </div>
-                    <div className="text-[11px] leading-snug text-muted-foreground">
-                      {t('kpi.planBadgeDesc')}
-                    </div>
-                  </div>
-                </div>
-              )}
-              {/* Status deviation banner (per mockups): red — "abnormally
-                  high"; orange — large deviation; yellow — small deviation.
-                  Orange/yellow interpolate the over-plan hours and the
-                  plan multiple into the description. */}
-              {(() => {
-                const banner = ALERT_BANNER_STYLES[actualOtStatus];
-                if (!isActualOt || !banner) return null;
-                const overHours = new Intl.NumberFormat(locale).format(
-                  otOverHours
-                );
-                // Green (within plan) uses a check icon instead of a warning
-                // triangle, per the mint mockup.
-                const BannerIcon =
-                  actualOtStatus === 'green' ? CircleCheck : TriangleAlert;
-                const descText =
-                  banner.descKey === 'kpi.deviationDesc'
-                    ? t(banner.descKey, { over: overHours })
-                      : banner.descKey === 'kpi.withinPlanDesc'
-                        ? otOverHours > 0
-                          ? t('kpi.deviationDesc', { over: overHours })
-                          : otOverHours < 0
-                            ? t('kpi.withinPlanUnderDesc', {
-                                under: new Intl.NumberFormat(locale).format(
-                                  Math.abs(otOverHours)
-                                ),
-                              })
-                            : t('kpi.withinPlanEqualDesc')
-                      : t(banner.descKey);
-                return (
-                  <div
-                    className={cn(
-                      'mt-3 flex min-h-[46px] items-center gap-2.5 rounded-lg px-3 py-2',
-                      banner.strip
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'flex size-6 shrink-0 items-center justify-center rounded-full shadow-sm',
-                        banner.icon
-                      )}
-                    >
-                      <BannerIcon
-                        className="size-3.5 text-white"
-                        aria-hidden
-                      />
-                    </span>
-                    {banner.divider && (
-                      <span
-                        aria-hidden
-                        className={cn('h-6 w-px shrink-0', banner.divider)}
-                      />
-                    )}
-                    <div className="min-w-0">
-                      <div
-                        className={cn(
-                          'text-xs font-bold leading-snug',
-                          banner.title
-                        )}
-                      >
-                        {t(banner.titleKey)}
-                      </div>
-                      <div
-                        className={cn('text-[11px] leading-snug', banner.desc)}
-                      >
-                        {descText}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
             </CardContent>
           </Card>
         );

@@ -3,16 +3,20 @@ import http from 'http';
 import https from 'https';
 import fs from 'fs';
 import path from 'path';
+import compression from 'compression';
 import { config, demoEnabled } from './src/config.js';
 import { allowlist } from './src/middleware/allowlist.js';
 import { rateLimit } from './src/middleware/rate-limit.js';
 import { auditMiddleware } from './src/middleware/audit.js';
 import apiRouter from './src/routes/api.js';
-import { startSnapshotJob } from './src/services/ig-snapshot.js';
+import { startJob as startHrSnapshotJob } from './src/services/hr-snapshot.js';
+import { startJob as startT8SnapshotJob } from './src/services/t8-snapshot.js';
 
 const app = express();
 app.disable('x-powered-by');
+app.use(compression()); // nén gzip/br mọi response — records ~20MB → ~2.5MB
 app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: false }));
 
 // ----- Bảo mật cho mọi đường /api/* -----
 app.use('/api', allowlist);
@@ -81,7 +85,8 @@ app.use((req, res) => {
 
 // ----- Khởi động -----
 if (!demoEnabled()) {
-  startSnapshotJob();
+  startHrSnapshotJob();
+  startT8SnapshotJob();
 }
 
 function listen(server, label) {
@@ -90,7 +95,7 @@ function listen(server, label) {
     console.log(` OT Dashboard API  ·  ${label}`);
     console.log(` Truy cập:  http://localhost:${config.port}/`);
     console.log(` Health:    http://localhost:${config.port}/api/health`);
-    console.log(` Chế độ:    ${demoEnabled() ? 'DEMO (dữ liệu mẫu)' : 'REAL (HR + T8 + Igarment)'}`);
+    console.log(` Chế độ:    ${demoEnabled() ? 'DEMO (dữ liệu mẫu)' : 'REAL (HR + T8)'}`);
     console.log(` IP cho phép: ${config.allowCidrs.length ? config.allowCidrs.join(', ') : 'TẤT CẢ (không khuyến khích)'}`);
     console.log('==========================================');
   });

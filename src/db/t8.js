@@ -14,6 +14,8 @@ export async function getT8Pool() {
     database: config.t8.database,
     user: config.t8.user,
     password: config.t8.password,
+    connectionTimeout: 15000,
+    requestTimeout: 60000,
     options: {
       encrypt: false,
       trustServerCertificate: true,
@@ -27,11 +29,23 @@ export async function getT8Pool() {
   return pool;
 }
 
-export async function t8Query(text, params = {}) {
+async function runOnce(text, params) {
   const request = (await getT8Pool()).request();
   for (const [k, v] of Object.entries(params)) {
     request.input(k, v);
   }
   const result = await request.query(text);
   return result.recordset;
+}
+
+export async function t8Query(text, params = {}) {
+  try {
+    return await runOnce(text, params);
+  } catch (e) {
+    // Mất kết nối idle (RDS đóng) -> reset pool rồi thử lại 1 lần.
+    console.warn('[t8] ket noi loi, reset pool va thu lai:', e.message);
+    try { pool && pool.close(); } catch { /* empty */ }
+    pool = null;
+    return runOnce(text, params);
+  }
 }

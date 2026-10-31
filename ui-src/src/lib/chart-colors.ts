@@ -16,14 +16,20 @@ export const DEPARTMENT_COLORS: Record<string, string> = {
   EMB: '#F97316',
   PRI: '#9333EA',
   PRN: '#9333EA',
-  FIN: '#F43F5E',
+  // 31/10/2026: FIN đổi từ hồng-đỏ (#F43F5E) sang teal (#14B8A6) — màu đỏ
+  // dễ bị hiểu nhầm là cảnh báo/nguy hiểm; teal không trùng màu nào khác.
+  FIN: '#14B8A6',
+  SOC: '#D97706',
   OTHER: '#475569',
   PAK: '#06B6D4',
   PAC: '#06B6D4',
 };
 
-export const PLAN_COLOR = '#14B8A6'; // teal for Plan bars
-export const ACTUAL_COLOR = '#2563EB'; // royal blue for Actual bars
+// 31/10/2026: đồng bộ với màu KPI — Plan = xanh dương (như card
+// "Total OT (Plan)"), Actual = xanh lá (như card "Actual OT" ở trạng thái
+// bình thường). Trước đây chart dùng teal/blue nên lệch màu với KPI.
+export const PLAN_COLOR = '#2563EB'; // royal blue, khớp KPI Total OT (Plan)
+export const ACTUAL_COLOR = '#10B981'; // emerald, khớp KPI Actual OT (status green)
 
 // ECharts draws text on <canvas>, which does NOT inherit the page font stack —
 // without an explicit family, Vietnamese diacritics fall back to an ugly
