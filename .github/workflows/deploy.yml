@@ -9,7 +9,8 @@ on:
 
 concurrency:
   group: shiftcore-ci
-  cancel-in-progress: false
+  # Commit mới nhất sẽ hủy bỏ workflow đang chờ/xếp hàng — luôn deploy bản mới nhất
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
