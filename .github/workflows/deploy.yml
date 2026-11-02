@@ -62,13 +62,15 @@ jobs:
             --exclude 'logs/' \
             "$GITHUB_WORKSPACE/" "$DEPLOY_DIR/"
 
-      - name: Ensure native build tools (make/g++) nếu thiếu
+      - name: Check native build tools (make/g++) — better-sqlite3 cần biên dịch
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
-          if ! command -v make >/dev/null 2>&1; then
-            sudo apt-get update && sudo apt-get install -y build-essential
+          if command -v make >/dev/null 2>&1 && command -v g++ >/dev/null 2>&1; then
+            echo "build tools: OK"
+          else
+            echo "Thiếu build tools. build-essential"
+            exit 1
           fi
-          echo "make: $(command -v make || echo 'KHONG CO')"
 
       - name: Install production dependencies
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
