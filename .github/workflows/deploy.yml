@@ -29,7 +29,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 22: better-sqlite3@13 yêu cầu node >= 22 — với node 20 (trước
+          # đây) npm không có prebuilt → node-gyp rebuild → thiếu make → fail.
+          # Node 22 có prebuilt cho better-sqlite3 → npm ci không cần biên dịch.
+          node-version: 22
           cache: npm
           cache-dependency-path: ui-src/package-lock.json
 
@@ -58,6 +61,14 @@ jobs:
             --exclude 'cache/' \
             --exclude 'logs/' \
             "$GITHUB_WORKSPACE/" "$DEPLOY_DIR/"
+
+      - name: Ensure native build tools (make/g++) nếu thiếu
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          if ! command -v make >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y build-essential
+          fi
+          echo "make: $(command -v make || echo 'KHONG CO')"
 
       - name: Install production dependencies
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
