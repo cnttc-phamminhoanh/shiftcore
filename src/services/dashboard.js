@@ -643,7 +643,11 @@ export async function buildDailySummary(from, to, deptSet, filters = {}) {
   // dropdown Trạng thái) — để dòng Tổng tính đúng theo đúng bộ dòng hiển thị.
   let visible = full;
   if (filters.alert && filters.alert !== 'all') {
-    visible = full.filter((r) => r.status === filters.alert);
+    // UI gửi 'normal' (mục "Bình thường") nhưng status dòng là 'green'
+    // (getDeptRangeAlertStatus) — map lại, nếu không lọc 'normal' trả bảng
+    // RỖNG + dòng Tổng toàn 0 (bug 02/11/2026 "dòng tổng bất thường").
+    const target = filters.alert === 'normal' ? 'green' : filters.alert;
+    visible = full.filter((r) => r.status === target);
   }
   // Dòng Tổng: "Công nhân" = số NHÂN VIÊN RIÊNG BIỆT (union của các ngày) —
   // trước đây client cộng workers từng dòng → cùng công nhân xuất hiện nhiều
