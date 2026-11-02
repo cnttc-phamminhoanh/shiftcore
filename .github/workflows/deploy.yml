@@ -14,9 +14,9 @@ concurrency:
 jobs:
   build-and-deploy:
     name: Build + Deploy
-    # Nếu runner của bạn không có label "ac-rn-shiftcore", đổi thành:
-    # runs-on: [ self-hosted, linux, x64 ]
-    runs-on: [ self-hosted, ac-rn-shiftcore ]
+    # Runner repo này tên "shiftcore_runner" (thư mục ~/germton_services/ac-rn-shiftcore),
+    # chỉ có label mặc định self-hosted/linux/x64 — KHÔNG có label "ac-rn-shiftcore".
+    runs-on: [ self-hosted, linux, x64 ]
     timeout-minutes: 20
     env:
       DEPLOY_DIR: /home/germton/germton_services/shiftcore
