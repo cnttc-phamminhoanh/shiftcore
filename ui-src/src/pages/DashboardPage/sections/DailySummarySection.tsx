@@ -1352,7 +1352,6 @@ export default memo(function DailySummarySection({
                       {formatHoursFromMinutes(workerTotals.actual)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-center" />
-                    <TableCell className="whitespace-nowrap text-center" />
                   </TableRow>
                 </TableFooter>
               ) : loading ? (
@@ -1493,7 +1492,7 @@ export default memo(function DailySummarySection({
                 <TableFooter>
                   <TableRow className="bg-muted/60 hover:bg-muted/60">
                     <TableCell
-                      colSpan={2}
+                      colSpan={3}
                       className="whitespace-nowrap text-left font-semibold text-foreground"
                     >
                       {t('table.totalRow')}
@@ -1510,8 +1509,6 @@ export default memo(function DailySummarySection({
                     <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums text-destructive">
                       {formatHoursFromMinutes(rollupTotals.actual)}
                     </TableCell>
-                    {/* Tỷ lệ OT is a per-process rate, never summed. */}
-                    <TableCell className="whitespace-nowrap text-center" />
                     <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums">
                       {rollupTotals.over}
                     </TableCell>
