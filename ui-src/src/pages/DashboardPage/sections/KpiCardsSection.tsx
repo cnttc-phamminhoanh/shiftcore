@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Image } from '@/components/ui/image';
 import type { IKpiData } from '@/data/kpidata';
 import { getActualOTStatus, type ActualOtStatus } from '@/lib/actual-ot-status';
 import { cn } from '@/lib/utils';
@@ -293,17 +292,6 @@ export default memo(function KpiCardsSection({
                     ({t(`common.${kpi.unit}`, kpi.unit)})
                   </div>
                 </div>
-                {/* Rocket badge (user-provided image): sits at the right
-                    end of the title row on the red alert card. Its pure-red
-                    background blends into the red gradient. */}
-                {kpi.title === 'Actual OT' && actualOtStatus === 'red' && (
-                  <Image
-                    aria-hidden
-                    src="https://miaoda.feishu.cn/aily/api/v1/feisuda/attachments/2f13e4da-3aa8-4bff-bfed-6642dae8ff5d/raw"
-                    alt=""
-                    className="ml-auto h-11 w-11 shrink-0 rounded-xl shadow-lg"
-                  />
-                )}
               </div>
               <div className="mt-5 flex items-center gap-3">
                 <div
