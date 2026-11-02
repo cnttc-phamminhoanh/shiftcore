@@ -171,15 +171,42 @@ export async function refreshRange(from, to) {
   return n;
 }
 
-// Các ngày trong khoảng [from,to] CHƯA có dữ liệu trong SQLite (trả về [min,max] để query gộp).
+// Các ngày trong khoảng [from,to] CHƯA có dữ liệu trong SQLite.
+// 02/11/2026: trả MẢNG khoảng thiếu CHÍNH XÁC (chỉ phần nằm ngoài [min,max]) —
+// trước đây trả nguyên {from,to}: mở khoảng 2 tháng mà thiếu 1 ngày cuối (hôm nay
+// chưa có dữ liệu nguồn) → kéo LẠI cả 2 tháng từ view HR (5-10s mỗi lần mở trang).
 function missingRange(from, to) {
   const d = getDb();
   const row = d.prepare(
     `SELECT MIN(fdate) AS minD, MAX(fdate) AS maxD FROM hr_ot`
   ).get();
-  if (!row || !row.minD) return { from, to };          // chưa có dữ liệu nào
-  if (from < row.minD || to > row.maxD) return { from, to }; // kéo dư range
-  return null;
+  if (!row || !row.minD) return [{ from, to }];          // chưa có dữ liệu nào
+  const missing = [];
+  if (from < row.minD) missing.push({ from, to: addDay(row.minD, -1) }); // phần TRƯỚC dữ liệu
+  if (to > row.maxD) missing.push({ from: addDay(row.maxD, 1), to });    // phần SAU dữ liệu
+  return missing.length ? missing : null;
+}
+
+// Ngày đã thử backfill NHƯNG nguồn HR không có dữ liệu (vd ngày hôm nay chưa tổng
+// hợp) → ghi nhớ để không query lại HR mỗi lần mở trang (5 phút thử lại 1 lần).
+const EMPTY_CHECK_COOLDOWN_MS = 5 * 60 * 1000;
+const emptyCheckedAt = new Map(); // date -> ts
+function markEmptyChecked(from, to) {
+  const d = getDb();
+  const now = Date.now();
+  for (let cur = from; cur <= to; cur = addDay(cur, 1)) {
+    if (!d.prepare('SELECT 1 FROM hr_ot WHERE fdate = ? LIMIT 1').get(cur)) {
+      emptyCheckedAt.set(cur, now);
+    }
+  }
+}
+function isEmptyChecked(from, to) {
+  const now = Date.now();
+  for (let cur = from; cur <= to; cur = addDay(cur, 1)) {
+    const t = emptyCheckedAt.get(cur);
+    if (!t || now - t > EMPTY_CHECK_COOLDOWN_MS) return false;
+  }
+  return true;
 }
 
 // Refresh nền (KHÔNG chặn request) khi khoảng trong vùng phủ nhưng quá 30 phút
@@ -197,15 +224,43 @@ function maybeBackgroundRefresh(from, to) {
     .finally(() => { refreshing = null; });
 }
 
+// Backfill (khoảng THIẾU dữ liệu) — dedup theo khoảng để nhiều endpoint cùng
+// thiếu 1 khoảng (vd 5 request UI mở đồng thời với to = hôm nay chưa có dữ liệu)
+// chờ CHUNG 1 refresh thay vì mỗi cái refresh riêng (trước: mỗi cái 30s).
+const backfillPending = new Map();
+function refreshBackfill(from, to) {
+  const key = `${from}::${to}`;
+  if (!backfillPending.has(key)) {
+    backfillPending.set(
+      key,
+      refreshRange(from, to)
+        .catch((err) => {
+          console.warn(`[hr-snapshot] backfill lỗi (vẫn trả dữ liệu cũ): ${err.message}`);
+        })
+        .then(() => {
+          // 02/11/2026: sau khi kéo từ HR mà SQLite VẪN thiếu → nguồn HR không có
+          // dữ liệu cho các ngày đó (không phải lỗi) → ghi dấu "đã thử, trống".
+          const miss = missingRange(from, to);
+          if (miss) for (const m of miss) markEmptyChecked(m.from, m.to);
+        })
+        .finally(() => {
+          backfillPending.delete(key);
+        })
+    );
+  }
+  return backfillPending.get(key);
+}
+
 // Đảm bảo SQLite có dữ liệu cho khoảng [from,to]; nếu thiếu -> backfill từ HR (request chờ).
 export async function ensureRange(from, to) {
   if (demoEnabled()) return [];
   const miss = missingRange(from, to);
   if (miss) {
-    try {
-      await refreshRange(miss.from, miss.to);
-    } catch (e) {
-      console.warn(`[hr-snapshot] backfill lỗi (vẫn trả dữ liệu cũ): ${e.message}`);
+    for (const r of miss) {
+      // Bỏ qua khoảng đã thử gần đây mà nguồn trống → không treo request chờ HR.
+      if (!isEmptyChecked(r.from, r.to)) {
+        await refreshBackfill(r.from, r.to);
+      }
     }
   } else {
     maybeBackgroundRefresh(from, to);

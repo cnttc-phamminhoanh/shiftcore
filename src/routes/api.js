@@ -75,8 +75,11 @@ router.get(
     const range = parseRange(req, res);
     if (!range) return;
     const deptSet = dash.expandDeptParam(req.query.dept);
-    const rows = await dash.buildDailySummary(range.from, range.to, deptSet, { date: req.query.date });
-    res.json({ from: range.from, to: range.to, rows });
+    const { rows, totals } = await dash.buildDailySummary(range.from, range.to, deptSet, {
+      date: req.query.date,
+      alert: req.query.alert,
+    });
+    res.json({ from: range.from, to: range.to, rows, totals });
   })
 );
 
@@ -108,13 +111,13 @@ router.get(
   wrap(async (req, res) => {
     const range = parseRange(req, res);
     if (!range) return;
-    const { rows } = await dash.buildProcessRollup(range.from, range.to, {
+    const { rows, totals } = await dash.buildProcessRollup(range.from, range.to, {
       dept: req.query.dept,
       process: req.query.process,
       alert: req.query.alert,
       date: req.query.date,
     });
-    res.json({ from: range.from, to: range.to, rows });
+    res.json({ from: range.from, to: range.to, rows, totals });
   })
 );
 

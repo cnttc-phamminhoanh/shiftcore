@@ -14,7 +14,7 @@ const num = (v, d) => {
 };
 
 export const config = {
-  port: num(process.env.PORT, 3000),
+  port: num(process.env.PORT, 2403),
   demo: bool(process.env.DEMO, false),
   allowCidrs: (process.env.ALLOW_CIDRS || '127.0.0.1/32,::1/128')
     .split(',')

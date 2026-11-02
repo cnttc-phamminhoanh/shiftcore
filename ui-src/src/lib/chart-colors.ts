@@ -10,16 +10,20 @@ export const CHART_COLORS = [
   '#A855F7', // purple (PAC)
 ];
 
+// 01/11/2026: rà soát màu phân biệt bộ phận — KHÔNG dùng xanh lá / vàng /
+// cam / đỏ (màu cảnh báo). Nút "Tất cả bộ phận" active dùng màu xanh dương
+// primary (#2563EB) → CUT KHÁC xanh dương. CUT trải qua blue-700 → violet
+// (giống PRI tím) → nay: xanh ngọc ĐẬM (cyan-800) — khác hẳn PRI tím, SEW
+// sky sáng, FIN teal, PAC cyan. SEW: xanh da trời; EMB: indigo; SOC: nâu
+// đất; FIN: teal.
 export const DEPARTMENT_COLORS: Record<string, string> = {
-  CUT: '#2563EB',
-  SEW: '#16A34A',
-  EMB: '#F97316',
+  CUT: '#155E75',
+  SEW: '#0EA5E9',
+  EMB: '#6366F1',
   PRI: '#9333EA',
   PRN: '#9333EA',
-  // 31/10/2026: FIN đổi từ hồng-đỏ (#F43F5E) sang teal (#14B8A6) — màu đỏ
-  // dễ bị hiểu nhầm là cảnh báo/nguy hiểm; teal không trùng màu nào khác.
   FIN: '#14B8A6',
-  SOC: '#D97706',
+  SOC: '#B45309',
   OTHER: '#475569',
   PAK: '#06B6D4',
   PAC: '#06B6D4',

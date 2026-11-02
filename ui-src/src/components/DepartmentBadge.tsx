@@ -21,19 +21,21 @@ interface DepartmentBadgeMeta {
 // Unified department identity: color + icon + label, shared by the filter
 // chips, table badges and the by-process rollup table.
 // Aliases (PRI/PRN, PAC/PAK) share the same visual identity.
+// 01/11/2026: KHÔNG dùng xanh lá / vàng / cam / đỏ cho bộ phận (màu cảnh
+// báo KPI + trạng thái bảng). Nút "Tất cả bộ phận" dùng xanh dương primary
+// → CUT: xanh ngọc đậm (cyan-800), khác hẳn PRI tím / SEW sky / FIN teal.
+// SEW: xanh da trời; EMB: indigo; SOC: nâu đất; FIN: teal.
 export const DEPARTMENT_BADGE_META: Record<string, DepartmentBadgeMeta> = {
-  CUT: { color: '#2563EB', icon: Scissors, label: 'CUT' },
-  SEW: { color: '#16A34A', icon: Shirt, label: 'SEW' },
-  EMB: { color: '#F97316', icon: Flower, label: 'EMB' },
+  CUT: { color: '#155E75', icon: Scissors, label: 'CUT' },
+  SEW: { color: '#0EA5E9', icon: Shirt, label: 'SEW' },
+  EMB: { color: '#6366F1', icon: Flower, label: 'EMB' },
   PRN: { color: '#9333EA', icon: Printer, label: 'PRN' },
   PRI: { color: '#9333EA', icon: Printer, label: 'PRI' },
-  // 31/10/2026: FIN đổi từ hồng-đỏ (#F43F5E) sang teal (#14B8A6) — màu đỏ
-  // dễ bị hiểu nhầm là cảnh báo/nguy hiểm (đồng bộ với chart-colors.ts).
   FIN: { color: '#14B8A6', icon: Box, label: 'FIN' },
   OTHER: { color: '#475569', icon: Cog, label: 'Other' },
   PAK: { color: '#06B6D4', icon: Package, label: 'PAK' },
   PAC: { color: '#06B6D4', icon: Package, label: 'PAC' },
-  SOC: { color: '#D97706', icon: Footprints, label: 'SOC' },
+  SOC: { color: '#B45309', icon: Footprints, label: 'SOC' },
 };
 
 const FALLBACK_META: DepartmentBadgeMeta = {

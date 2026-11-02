@@ -9,6 +9,7 @@ import { allowlist } from './src/middleware/allowlist.js';
 import { rateLimit } from './src/middleware/rate-limit.js';
 import { auditMiddleware } from './src/middleware/audit.js';
 import apiRouter from './src/routes/api.js';
+import { warmUpCache } from './src/services/dashboard.js';
 import { startJob as startHrSnapshotJob } from './src/services/hr-snapshot.js';
 import { startJob as startT8SnapshotJob } from './src/services/t8-snapshot.js';
 
@@ -98,6 +99,8 @@ function listen(server, label) {
     console.log(` Chế độ:    ${demoEnabled() ? 'DEMO (dữ liệu mẫu)' : 'REAL (HR + T8)'}`);
     console.log(` IP cho phép: ${config.allowCidrs.length ? config.allowCidrs.join(', ') : 'TẤT CẢ (không khuyến khích)'}`);
     console.log('==========================================');
+    // 02/11/2026: làm ấm cache ngầm sau khi bắt đầu lắng nghe (không chặn).
+    warmUpCache();
   });
 }
 

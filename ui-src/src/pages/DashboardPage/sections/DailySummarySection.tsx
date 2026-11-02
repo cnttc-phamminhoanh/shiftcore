@@ -267,6 +267,27 @@ export default memo(function DailySummarySection({
   } | null>(null);
   // Tab "Theo b峄?ph岷璶 chi ti岷縯": g峄檖 s岷祅 tr锚n server (s峄?d貌ng ≥s峄?ph貌ng ban).
   const [rollupRows, setRollupRows] = useState<RollupRow[] | null>(null);
+  // 02/11/2026: dong Tong do SERVER tinh (cot "Cong nhan" = RIENG BIET, khong
+  // cong don theo ngay). Tab "Chi tiet bo phan" fetch rieng theo loc (ngay +
+  // trang thai) de totals khop dung dong dang hien thi.
+  const [deptData, setDeptData] = useState<{
+    rows: IDailySummary[];
+    totals: {
+      workers: number;
+      otGe4: number;
+      overCount: number;
+      planOtMinutes: number;
+      actualOtMinutes: number;
+    } | null;
+  } | null>(null);
+  const [deptLoading, setDeptLoading] = useState(false as boolean);
+  const [rollupTotalsData, setRollupTotalsData] = useState<{
+    workers: number;
+    otGe4: number;
+    over: number;
+    plan: number;
+    actual: number;
+  } | null>(null);
   const [workerLoading, setWorkerLoading] = useState(false as boolean);
   const [rollupLoading, setRollupLoading] = useState(false as boolean);
   const [exporting, setExporting] = useState(false as boolean);
@@ -282,6 +303,8 @@ export default memo(function DailySummarySection({
     ) {
       setWorkerData(null);
       setRollupRows(null);
+      setDeptData(null);
+      setRollupTotalsData(null);
     }
     prevRange.current = { from: dateFrom, to: dateTo };
   }, [dateFrom, dateTo]);
@@ -429,6 +452,37 @@ export default memo(function DailySummarySection({
   }, [mode, dateFrom, dateTo, activeFilters, drillDown, workerPage, detailSortKey, detailSortDir, selected]);
 
   // Fetch g峄檖 theo b峄?ph岷璶 chi ti岷縯 (process) khi tab t瓢啤ng 峄﹏g active.
+  // 02/11/2026: fetch tab "Chi tiết bộ phận" từ server theo lọc (ngày + trạng
+  // thái) — server tính dòng Tổng "Công nhân" RIÊNG BIỆT theo đúng dòng hiển thị.
+  useEffect(() => {
+    if (mode !== 'process') return;
+    let alive = true;
+    setDeptLoading(true);
+    api
+      .daily(
+        { from: dateFrom, to: dateTo },
+        selected !== 'all' ? selected : activeFilters.department,
+        {
+          date: activeFilters.date === 'all' ? undefined : activeFilters.date,
+          alert: activeFilters.alert,
+        }
+      )
+      .then((res) => {
+        if (!alive) return;
+        setDeptData({ rows: res.rows, totals: res.totals ?? null });
+      })
+      .catch(() => {
+        if (alive) setDeptData(null);
+      })
+      .finally(() => {
+        if (alive) setDeptLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, dateFrom, dateTo, activeFilters, selected]);
+
   useEffect(() => {
     if (mode !== 'processRollup') return;
     let alive = true;
@@ -444,7 +498,10 @@ export default memo(function DailySummarySection({
         }
       )
       .then((res) => {
-        if (alive) setRollupRows(res.rows as unknown as typeof rollupRows);
+        if (alive) {
+          setRollupRows(res.rows as unknown as typeof rollupRows);
+          setRollupTotalsData(res.totals ?? null);
+        }
       })
       .catch(() => {
         if (alive) setRollupRows([]);
@@ -485,7 +542,7 @@ export default memo(function DailySummarySection({
   // thêm lọc trạng thái theo yêu cầu; level 'normal' ứng với status 'green').
   const processRows = useMemo(
     () =>
-      daily.filter(
+      (deptData?.rows ?? daily).filter(
         (row) =>
           isDateInRange(row.date, dateFrom, dateTo) &&
           filterDepartments(selected).includes(row.department) &&
@@ -498,7 +555,7 @@ export default memo(function DailySummarySection({
           (!activeFilters.search ||
             row.department.toLowerCase().includes(activeFilters.search))
       ),
-    [selected, activeFilters, dateFrom, dateTo, daily]
+    [selected, activeFilters, dateFrom, dateTo, daily, deptData]
   );
 
   // Client-side sorting for the department detail table (default: date asc).
@@ -573,6 +630,24 @@ export default memo(function DailySummarySection({
         .reverse(),
     [daily, workerData, rollupRows]
   );
+
+  // 02/11/2026: khi ĐỔI khoảng search ở date picker mà ngày đang lọc không còn
+  // nằm trong dữ liệu (ngoài range mới / ngày không có dữ liệu), Select không
+  // tìm thấy item tương ứng → LABEL dropdown "Ngày" hiển thị RỖNG. Tự reset
+  // draft + bộ lọc đã áp dụng về "Tất cả ngày" để label luôn có nội dung.
+  useEffect(() => {
+    if (draftDate !== 'all' && (draftDate < dateFrom || draftDate > dateTo || !dateOptions.includes(draftDate))) {
+      setDraftDate('all');
+    }
+    const applied = filters[mode]?.date;
+    if (applied && applied !== 'all' && (applied < dateFrom || applied > dateTo || !dateOptions.includes(applied))) {
+      setFilters((prev) => ({
+        ...prev,
+        [mode]: { ...prev[mode], date: 'all' },
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateFrom, dateTo, dateOptions, mode]);
 
   // Exports the currently visible rows of the active view as an
   // Excel-compatible UTF-8 CSV (with BOM so Vietnamese opens cleanly).
@@ -747,6 +822,7 @@ export default memo(function DailySummarySection({
 
   // Loading th岷璽 theo tab: b岷g c么ng nh芒n / g峄檖 process ch峄?fetch t峄?server.
   const loading =
+    (mode === 'process' && deptLoading) ||
     (mode === 'worker' && workerLoading) ||
     (mode === 'processRollup' && rollupLoading);
 
@@ -785,17 +861,17 @@ export default memo(function DailySummarySection({
   // never just the visible page —consistent with the pagination counts.
   const processTotals = useMemo(
     () => ({
-      workers: processRows.reduce((sum, row) => sum + row.workers, 0),
+      workers: deptData?.totals?.workers ?? processRows.reduce((sum, row) => sum + row.workers, 0),
       // otGe4 đã tính THEO NGÀY từng dòng nên tổng là cộng trực tiếp.
-      otGe4: processRows.reduce((sum, row) => sum + (row.otGe4 ?? 0), 0),
-      over: processRows.reduce((sum, row) => sum + (row.overCount ?? 0), 0),
+      otGe4: deptData?.totals?.otGe4 ?? processRows.reduce((sum, row) => sum + (row.otGe4 ?? 0), 0),
+      over: deptData?.totals?.overCount ?? processRows.reduce((sum, row) => sum + (row.overCount ?? 0), 0),
       // 31/10/2026: cộng theo minutes CHÍNH XÁC từ server (planOtMinutes/
       // actualOtMinutes) — trước đây cộng planHours*60 của giá trị ĐÃ LÀM TRÒN
       // từng dòng → footer trội ~2.6h so với KPI.
-      plan: processRows.reduce((sum, row) => sum + (row.planOtMinutes ?? Math.round(row.planHours * 60)), 0),
-      actual: processRows.reduce((sum, row) => sum + (row.actualOtMinutes ?? Math.round(row.actualOtHours * 60)), 0),
+      plan: deptData?.totals?.planOtMinutes ?? processRows.reduce((sum, row) => sum + (row.planOtMinutes ?? Math.round(row.planHours * 60)), 0),
+      actual: deptData?.totals?.actualOtMinutes ?? processRows.reduce((sum, row) => sum + (row.actualOtMinutes ?? Math.round(row.actualOtHours * 60)), 0),
     }),
-    [processRows]
+    [processRows, deptData]
   );
   // T峄昻g c么ng nh芒n do SERVER t铆nh tr锚n to脿n b峄?k岷縯 qu岷?l峄峜 (kh么ng ch峄?trang).
   const workerTotals = useMemo(
@@ -807,14 +883,14 @@ export default memo(function DailySummarySection({
   );
   const rollupTotals = useMemo(
     () => ({
-      workers: sortedRollup.reduce((sum, row) => sum + row.workers, 0),
+      workers: rollupTotalsData?.workers ?? sortedRollup.reduce((sum, row) => sum + row.workers, 0),
       // otGe4 đã tính THEO NGÀY từng dòng nên tổng là cộng trực tiếp.
-      otGe4: sortedRollup.reduce((sum, row) => sum + (row.otGe4 ?? 0), 0),
-      plan: sortedRollup.reduce((sum, row) => sum + row.plan, 0),
-      actual: sortedRollup.reduce((sum, row) => sum + row.actual, 0),
-      over: sortedRollup.reduce((sum, row) => sum + row.over, 0),
+      otGe4: rollupTotalsData?.otGe4 ?? sortedRollup.reduce((sum, row) => sum + (row.otGe4 ?? 0), 0),
+      plan: rollupTotalsData?.plan ?? sortedRollup.reduce((sum, row) => sum + row.plan, 0),
+      actual: rollupTotalsData?.actual ?? sortedRollup.reduce((sum, row) => sum + row.actual, 0),
+      over: rollupTotalsData?.over ?? sortedRollup.reduce((sum, row) => sum + row.over, 0),
     }),
-    [sortedRollup]
+    [sortedRollup, rollupTotalsData]
   );
 
   return (
@@ -1145,10 +1221,10 @@ export default memo(function DailySummarySection({
                         )}
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-center tabular-nums">
-                        {formatHoursFromMinutes(row.planHours * 60)}
+                        {formatHoursFromMinutes(row.planOtMinutes ?? Math.round(row.planHours * 60))}
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-center tabular-nums font-medium">
-                        {formatHoursFromMinutes(row.actualOtHours * 60)}
+                        {formatHoursFromMinutes(row.actualOtMinutes ?? Math.round(row.actualOtHours * 60))}
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-center">
                         <span

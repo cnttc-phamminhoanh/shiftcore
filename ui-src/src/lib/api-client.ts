@@ -52,8 +52,17 @@ export const api = {
       { ...range }
     ),
 
-  daily: (range: DateRange, dept = 'all') =>
-    get<{ rows: IDailySummary[] }>('/overtime/daily', { ...range, dept }),
+  daily: (range: DateRange, dept = 'all', opts: { date?: string; alert?: string } = {}) =>
+    get<{
+      rows: IDailySummary[];
+      totals?: {
+        workers: number;
+        otGe4: number;
+        overCount: number;
+        planOtMinutes: number;
+        actualOtMinutes: number;
+      } | null;
+    }>('/overtime/daily', { ...range, dept, date: opts.date, alert: opts.alert }),
 
   records: (
     range: DateRange,
@@ -109,6 +118,7 @@ export const api = {
         level: string;
         status: string;
       }[];
+      totals?: { workers: number; otGe4: number; over: number; plan: number; actual: number } | null;
     }>('/overtime/process-rollup', {
       ...range,
       dept: opts.dept || 'all',

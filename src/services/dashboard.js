@@ -13,13 +13,12 @@ import * as demo from './demo.js';
 
 // ---------- helpers ----------
 const round1 = (n) => Math.round(n * 10) / 10;
+// 02/11/2026: 2 biểu đồ (monthly + department-trend) làm tròn 2 chữ số để đồng
+// bộ với bảng/dòng tổng/KPI (cùng 2 chữ số thập phân).
+const round2 = (n) => Math.round(n * 100) / 100;
 
-// Số ngày của khoảng from..to (bao gồm cả 2 đầu) — dùng cho công thức trạng thái tổng.
-function searchDaysOf(fromIso, toIso) {
-  const [y1, m1, d1] = fromIso.split('-').map(Number);
-  const [y2, m2, d2] = toIso.split('-').map(Number);
-  return Math.floor((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000) + 1;
-}
+// Số ngày của khoảng from..to (bao gồm cả 2 đầu) — công thức trạng thái tổng
+// đã chuyển sang tính tại chỗ bằng searchDays truyền từ client; hàm cũ bỏ đi.
 
 function isoDate(dt) {
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
@@ -59,10 +58,115 @@ function intersects(from, to, period) {
   return !(period.end < from || period.start > to);
 }
 
-// ---------- cache kết quả gộp (5 phút) — tránh query DB lặp cho cùng khoảng ngày ----------
-const recordsCache = new Map();
-const recordsPending = new Map();
+// ---------- cache kết quả gộp theo TỪNG NGÀY (5 phút) ----------
+// 02/11/2026: cache theo NGÀY thay vì theo nguyên khoảng — dịch chuyển 1 ngày
+// trong khoảng chỉ phải tải (các) ngày THIẾU, 61 ngày còn lại dùng lại cache
+// ngay (trước đây đổi 1 ngày = mất cả cache, parse lại 62 ngày ~1.5s).
+// Các ngày thiếu được nhóm thành đoạn liên tục, mỗi đoạn đọc 1 lần theo khoảng
+// (nên khoảng mới TO vẫn chỉ 1 query như cũ). Dedup đồng thời theo đoạn.
+// Mọi endpoint vẫn dùng CHUNG nguồn loadRecords này → số liệu không lệch.
+const recordsCache = new Map();   // date -> { t, rows } (bản ghi công nhân-ngày)
+const recordsPending = new Map(); // "s::e" -> promise (đang tải đoạn)
 const CACHE_TTL = 5 * 60 * 1000;
+
+function fmtDay(d) {
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${dd}`;
+}
+
+function daysBetween(from, to) {
+  const out = [];
+  const start = new Date(`${from}T00:00:00`);
+  const end = new Date(`${to}T00:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return out;
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) out.push(fmtDay(d));
+  return out;
+}
+
+// Ghi rows (công nhân-ngày) đã parse vào cache theo đúng ngày của record.
+// Gộp theo ngày TRƯỚC khi set — mỗi ngày 1 entry chứa ĐẦY ĐỦ records của ngày.
+// (Tránh set từng record → entry chỉ còn record cuối cùng.)
+function seedDayCache(rows) {
+  const byDay = new Map();
+  for (const r of rows) {
+    const arr = byDay.get(r.date);
+    if (arr) arr.push(r);
+    else byDay.set(r.date, [r]);
+  }
+  for (const [date, arr] of byDay) {
+    recordsCache.set(date, { t: Date.now(), rows: arr });
+  }
+}
+
+async function loadRecordsSpan(from, to) {
+  const key = `${from}::${to}`;
+  if (recordsPending.has(key)) return recordsPending.get(key);
+  const p = (async () => {
+    const rows = await loadRecordsFresh(from, to);
+    seedDayCache(rows);
+    // Ngày KHÔNG có bản ghi (nghỉ / ngày tương lai chưa đồng bộ) cũng được cache
+    // là "rỗng" — nếu không, mỗi request lại coi ngày đó là THIẾU → refresh nguồn
+    // HR (30s/lần) dù không có gì để kéo.
+    for (const d of daysBetween(from, to)) {
+      if (!recordsCache.has(d)) recordsCache.set(d, { t: Date.now(), rows: [] });
+    }
+    recordsPending.delete(key);
+    return rows;
+  })();
+  recordsPending.set(key, p);
+  return p;
+}
+
+export async function loadRecords(from, to) {
+  const days = daysBetween(from, to);
+  if (!days.length) return [];
+  const now = Date.now();
+  // Ngày chưa có / đã hết hạn → cần tải; nhóm thành đoạn liên tục để ít query.
+  const missing = days.filter((d) => {
+    const hit = recordsCache.get(d);
+    return !hit || now - hit.t >= CACHE_TTL;
+  });
+  if (missing.length) {
+    const spans = [];
+    let s = missing[0];
+    let prev = missing[0];
+    for (let i = 1; i < missing.length; i++) {
+      const d = missing[i];
+      const next = new Date(`${prev}T00:00:00`);
+      next.setDate(next.getDate() + 1);
+      if (d === fmtDay(next)) { prev = d; continue; }
+      spans.push([s, prev]);
+      s = d;
+      prev = d;
+    }
+    spans.push([s, prev]);
+    await Promise.all(spans.map(([a, b]) => loadRecordsSpan(a, b)));
+  }
+  const out = [];
+  for (const d of days) {
+    const hit = recordsCache.get(d);
+    if (hit) out.push(...hit.rows);
+  }
+  return out;
+}
+
+// ---------- làm ấm cache khi server khởi động (02/11/2026) ----------
+// Tự đọc + parse 2 tháng gần nhất ngầm sau khi server lắng nghe → người mở
+// link đầu tiên không phải chờ pha "lạnh ~1.5s". Không chặn luồng khởi động.
+export function warmUpCache() {
+  if (demoEnabled()) return;
+  const now = new Date();
+  const from = fmtDay(new Date(now.getFullYear(), now.getMonth() - 2, now.getDate()));
+  // Làm ấm đến NGÀY HÔM QUA, không lấy hôm nay: ngày hôm nay thường chưa có
+  // dữ liệu trong SQLite → nếu lấy hôm nay, lúc khởi động sẽ kích hoạt refresh
+  // nguồn HR (và nếu HR đang mất kết nối sẽ chờ timeout — làm UI lần đầu chậm).
+  // Ngày hôm nay sẽ được backfill tự nhiên khi user chọn hoặc job nền chạy.
+  const to = fmtDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+  loadRecords(from, to)
+    .then(() => console.log(`[dashboard] cache đã được làm ấm: ${from} .. ${to}`))
+    .catch((err) => console.error('[dashboard] lỗi làm ấm cache:', err.message));
+}
 
 async function loadRecordsFresh(from, to) {
   if (demoEnabled()) return demo.getRecords();
@@ -156,23 +260,6 @@ async function loadRecordsFresh(from, to) {
     push(code, date);
   }
   return records;
-}
-
-export async function loadRecords(from, to) {
-  const cacheKey = `${from}::${to}`;
-  const hit = recordsCache.get(cacheKey);
-  if (hit && Date.now() - hit.t < CACHE_TTL) return hit.rows;
-  // Giữ promise đang chạy để các endpoint gọi đồng thời cùng khoảng ngày
-  // không build trùng (tránh 5 request song song cùng xử lý 122k dòng).
-  if (recordsPending.has(cacheKey)) return recordsPending.get(cacheKey);
-  const p = (async () => {
-    const rows = await loadRecordsFresh(from, to);
-    recordsCache.set(cacheKey, { t: Date.now(), rows });
-    recordsPending.delete(cacheKey);
-    return rows;
-  })();
-  recordsPending.set(cacheKey, p);
-  return p;
 }
 
 // ---------- bộ lọc giống toolbar UI ----------
@@ -403,7 +490,7 @@ export async function buildProcessRollup(from, to, filters = {}) {
   if (demoEnabled()) {
     const records = await loadRecords(from, to);
     const rows = filterRecords(records, { ...filters, deptSet });
-    return { rows: rollupProcessRows(rows, filters) };
+    return { rows: rollupProcessRows(rows, filters), totals: null };
   }
   // 30/10/2026 tối ưu: dùng CHUNG nguồn loadRecords (cache 5 phút).
   let rows = (await loadRecords(from, to)).filter((r) => deptSet.has(r.department));
@@ -415,8 +502,33 @@ export async function buildProcessRollup(from, to, filters = {}) {
     rows = rows.filter((r) => r.date === filters.date);
   }
   rows = applyAlertFilter(rows, filters.alert);
-  const days = filters.date && filters.date !== 'all' ? 1 : searchDaysOf(from, to);
-  return { rows: rollupProcessRows(rows, filters, days) };
+  const days = 1; // 01/11/2026: bảng chi tiết theo từng ngày → số ngày tìm kiếm = 1
+  // 02/11/2026: dòng Tổng tính từ CHÍNH rows đã lọc — "Công nhân" = RIÊNG BIỆT
+  // (union workerId), otGe4/over = số lượt (record ≥240 phút / actual>plan),
+  // plan/actual = tổng phút. Trước đây client cộng workers từng dòng theo ngày
+  // → cùng công nhân đếm trùng (93.014 thay vì ~2.128 người).
+  const workerSet = new Set();
+  let ge4Cnt = 0;
+  let overCnt = 0;
+  let planMin = 0;
+  let actualMin = 0;
+  for (const r of rows) {
+    workerSet.add(r.workerId);
+    if (r.actualOtMinutes >= HEAVY_OT_MINUTES) ge4Cnt += 1;
+    if (r.actualOtMinutes > r.planOtMinutes) overCnt += 1;
+    planMin += r.planOtMinutes;
+    actualMin += r.actualOtMinutes;
+  }
+  return {
+    rows: rollupProcessRows(rows, filters, days),
+    totals: {
+      workers: workerSet.size,
+      otGe4: ge4Cnt,
+      over: overCnt,
+      plan: planMin,
+      actual: actualMin,
+    },
+  };
 }
 
 function rollupProcessRows(rows, filters, searchDays) {
@@ -461,7 +573,7 @@ function rollupProcessRows(rows, filters, searchDays) {
 export async function buildDailySummary(from, to, deptSet, filters = {}) {
   if (demoEnabled()) {
     const rows = demo.getDailySummary();
-    return rows.filter((r) => deptSet.has(r.department));
+    return { rows: rows.filter((r) => deptSet.has(r.department)), totals: null };
   }
   // 30/10/2026 tối ưu + sửa sai: actual/plan/issue lấy từ CHUNG nguồn loadRecords
   // (cache 5 phút). "Công nhân" = số nhân viên RIÊNG BIỆT có OT thực tế > 0
@@ -470,7 +582,6 @@ export async function buildDailySummary(from, to, deptSet, filters = {}) {
   // 0/null, đếm vào là sai theo yêu cầu user). Bỏ luôn query COUNT DISTINCT cũ
   // (trước đây gán bằng Math.max trên từng phòng → chỉ ra số của 1 phòng lớn
   // nhất, không phải tổng).
-  const db = getSnapshotDb();
   const [records] = await Promise.all([
     loadRecords(from, to),
   ]);
@@ -503,11 +614,13 @@ export async function buildDailySummary(from, to, deptSet, filters = {}) {
     if (r.actualOtMinutes >= HEAVY_OT_MINUTES) g.ge4Set.add(r.workerId);
     if (r.actualOtMinutes > r.planOtMinutes) g.overCount += 1;
   }
-  // "Số ngày tìm kiếm": khi lọc đúng 1 ngày thì = 1 (31/10/2026); ngược lại
-  // = số ngày trong khoảng from..to.
-  const days = filters.date && filters.date !== 'all' ? 1 : searchDaysOf(from, to);
-  return Array.from(groups.values())
-    .map((g) => ({
+  // 01/11/2026 user chốt: bảng chi tiết theo TỪNG NGÀY nên "số ngày tìm kiếm"
+  // LUÔN = 1 (không dùng số ngày trong khoảng from..to) — ngưỡng cảnh báo tính
+  // sát theo 1 ngày, không bị kéo rộng bởi D = 62.
+  const days = 1;
+  const full = Array.from(groups.values()).map((g) => {
+    const status = rules.getDeptRangeAlertStatus(g.planHours, g.actualOtHours, g.empSet.size, days);
+    return {
       date: g.date,
       department: g.department,
       workers: g.empSet.size,
@@ -519,9 +632,49 @@ export async function buildDailySummary(from, to, deptSet, filters = {}) {
       planOtMinutes: g.planOtMinutes,
       actualOtMinutes: g.actualOtMinutes,
       overCount: g.overCount,
-      status: rules.getDeptRangeAlertStatus(g.planHours, g.actualOtHours, g.empSet.size, days),
-    }))
-    .sort((a, b) => a.date.localeCompare(b.date) || GROUP_ORDER[a.department] - GROUP_ORDER[b.department]);
+      status,
+      // 02/11/2026: giữ Set nội bộ để tính dòng Tổng (Công nhân = RIÊNG BIỆT,
+      // không cộng dồn theo ngày); được bóc ra trước khi trả về client.
+      _empSet: g.empSet,
+      _ge4Set: g.ge4Set,
+    };
+  });
+  // 02/11/2026: lọc theo trạng thái NGAY TRÊN SERVER (tab chi tiết bộ phận có
+  // dropdown Trạng thái) — để dòng Tổng tính đúng theo đúng bộ dòng hiển thị.
+  let visible = full;
+  if (filters.alert && filters.alert !== 'all') {
+    visible = full.filter((r) => r.status === filters.alert);
+  }
+  // Dòng Tổng: "Công nhân" = số NHÂN VIÊN RIÊNG BIỆT (union của các ngày) —
+  // trước đây client cộng workers từng dòng → cùng công nhân xuất hiện nhiều
+  // ngày bị đếm trùng (vd 93.014 thay vì ~2.128). otGe4/over = số LƯỢT nên
+  // CỘNG DỒN theo dòng (không union — union ra 664, cộng dồn = 3.576 lượt,
+  // khớp tab "Theo bộ phận chi tiết"); plan/actual = tổng phút chính xác.
+  const workerSet = new Set();
+  let ge4Cnt = 0;
+  let planMin = 0;
+  let actualMin = 0;
+  let overCnt = 0;
+  for (const r of visible) {
+    r._empSet.forEach((w) => workerSet.add(w));
+    ge4Cnt += r._ge4Set.size;
+    planMin += r.planOtMinutes;
+    actualMin += r.actualOtMinutes;
+    overCnt += r.overCount;
+  }
+  const rows = visible
+    .sort((a, b) => a.date.localeCompare(b.date) || GROUP_ORDER[a.department] - GROUP_ORDER[b.department])
+    .map(({ _empSet, _ge4Set, ...rest }) => rest);
+  return {
+    rows,
+    totals: {
+      workers: workerSet.size,
+      otGe4: ge4Cnt,
+      overCount: overCnt,
+      planOtMinutes: planMin,
+      actualOtMinutes: actualMin,
+    },
+  };
 }
 
 // ---------- /api/kpi ----------
@@ -548,8 +701,11 @@ export async function buildKpi(from, to) {
   };
   return [
     { id: '1', title: 'Worker Count', value: agg.totalWorkers, unit: 'people', trend: trend(workerSpark), sparkline: workerSpark },
-    { id: '2', title: 'Total OT (Plan)', value: round1(agg.totalPlanH), unit: 'hours', trend: trend(planSpark), sparkline: planSpark },
-    { id: '3', title: 'Actual OT', value: round1(agg.totalActualH), unit: 'hours', trend: trend(actualSpark), sparkline: actualSpark },
+    // 02/11/2026: KHÔNG round1 ở server — card client tự toFixed(2). Trước đây
+    // round1(206990.2166)=206990.2 rồi toFixed(2)=206990.20 → lệch 0.02 với
+    // dòng Tổng bảng (206990.22) — lại thành "bất thường" user phát hiện.
+    { id: '2', title: 'Total OT (Plan)', value: agg.totalPlanH, unit: 'hours', trend: trend(planSpark), sparkline: planSpark },
+    { id: '3', title: 'Actual OT', value: agg.totalActualH, unit: 'hours', trend: trend(actualSpark), sparkline: actualSpark },
   ];
 }
 
@@ -598,8 +754,8 @@ export async function buildMonthly(from, to) {
   return Array.from(byMonth.entries()).sort().map(([ym, v]) => ({
     id: `Month ${Number(ym.split('-')[1])}`,
     month: `Month ${Number(ym.split('-')[1])}`,
-    planOtHours: round1(v.plan),
-    actualOtHours: round1(v.actual),
+    planOtHours: round2(v.plan),
+    actualOtHours: round2(v.actual),
     workerCount: 0,
   }));
 }
@@ -615,8 +771,8 @@ export async function buildDepartmentTrend(from, to) {
       id: `${r.ym}-${r.group}`,
       month: `Month ${monthNum}`,
       department: r.group,
-      hours: round1(r.actualH),
-      planHours: round1(r.planH),
+      hours: round2(r.actualH),
+      planHours: round2(r.planH),
     });
   }
   return rows;

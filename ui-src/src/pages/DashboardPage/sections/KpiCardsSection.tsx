@@ -315,7 +315,10 @@ export default memo(function KpiCardsSection({
                     }),
                   }}
                 >
-                  {kpi.value}
+                  {(kpi.title === 'Actual OT' || kpi.title === 'Total OT (Plan)') &&
+                  typeof kpi.value === 'number'
+                    ? kpi.value.toFixed(2)
+                    : kpi.value}
                 </div>
               </div>
               {/* Flexible spacer: absorbs leftover height so cards in the

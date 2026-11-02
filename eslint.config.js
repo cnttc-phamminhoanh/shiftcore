@@ -39,4 +39,21 @@ export default [
       'no-var': 'warn',
     },
   },
+  // File .cjs (VD: ecosystem.config.cjs cho PM2) — CommonJS: có __dirname/require
+  {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      ecmaVersion: 2024,
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      'no-console': 'off',
+      semi: ['warn', 'always'],
+      'prefer-const': 'warn',
+      'no-var': 'warn',
+    },
+  },
 ];

@@ -1,4 +1,3 @@
-// Audit log — ghi mỗi lần gọi API vào logs/audit.log (phục vụ truy vết khi có sự cố / key bị lộ / ai đó tải dữ liệu bất thường).
 import fs from 'fs';
 import path from 'path';
 import { config } from '../config.js';

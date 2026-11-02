@@ -246,10 +246,13 @@ export function buildDepartmentMonthlySpikeStats(records) {
 }
 
 // ---------- Trạng thái thẻ KPI "Actual OT" ----------
-// green  : A <  P + W * 0.5  * D
-// yellow : A >= P + W * 0.5  * D và A < P + W * 0.75 * D
-// orange : A >= P + W * 0.75 * D và A <= P + W * 1    * D
-// red    : A >  P + W * 1    * D
+// Công thức user chốt 31/10/2026, bổ sung XANH 01/11/2026:
+//   green : P + W*0*D <= A < P + W*0.5*D     (bình thường; A dưới P vẫn green —
+//           thẻ KPI KHÔNG có điều kiện "dưới kế hoạch" như bảng chi tiết)
+//   yellow: P + W*0.5*D <= A < P + W*0.75*D  (chênh lệch nhỏ)
+//   orange: P + W*0.75*D <= A < P + W*1*D    (chênh lệch lớn)
+//   red   : A >= P + W*1*D                   (bất thường)
+//   D = số ngày tìm kiếm (KPI dùng cả khoảng from..to)
 // neutral: dữ liệu thiếu/không hợp lệ
 export function getActualOTStatus(actualOT, planOT, totalWorkers, searchDays) {
   if (
@@ -262,23 +265,23 @@ export function getActualOTStatus(actualOT, planOT, totalWorkers, searchDays) {
   const yellowThreshold = planOT + totalWorkers * 0.5 * searchDays;
   const orangeThreshold = planOT + totalWorkers * 0.75 * searchDays;
   const redThreshold = planOT + totalWorkers * 1 * searchDays;
-  if (actualOT > redThreshold) return 'red';
+  if (actualOT >= redThreshold) return 'red';
   if (actualOT >= orangeThreshold) return 'orange';
   if (actualOT >= yellowThreshold) return 'yellow';
   return 'green';
 }
 
 // ---------- Trạng thái theo khoảng TỔNG (bảng "Chi tiết bộ phận" + "Theo bộ phận chi tiết") ----------
-// Công thức user chốt 30/10/2026, đính chính ngày 30/10/2026 (vàng):
+// Công thức user chốt 30/10/2026, điều chỉnh 01/11/2026:
 //   W = số công nhân của dòng, P = tổng giờ kế hoạch dòng, A = tổng giờ thực tế
-//   dòng, D = số ngày tìm kiếm.
-//   green : A < P + W*0.5*D                              (trong kế hoạch)
-//   yellow: P + W*0.5*D <= A < P + W*0.75*D              (chênh lệch nhỏ)
-//   orange: P + W*0.75*D <= A <= P + W*1*D               (chênh lệch lớn)
-//   red   : A > P + W*1*D  hoặc A < P                    (bất thường — thực tế dưới kế hoạch cũng là bất thường)
+//   dòng, D = 1 (bảng chi tiết theo TỪNG NGÀY — chốt 01/11/2026; không dùng số
+//   ngày trong khoảng tìm kiếm để ngưỡng không bị kéo rộng).
+//   green : P + W*0*D <= A < P + W*0.5*D    (bình thường)
+//   yellow: P + W*0.5*D <= A < P + W*0.75*D (chênh lệch nhỏ)
+//   orange: P + W*0.75*D <= A < P + W*1*D   (chênh lệch lớn)
+//   red   : A >= P + W*1*D  hoặc A < P      (bất thường — thực tế dưới kế hoạch
+//           cũng là bất thường, quy ước user chốt 30/10/2026)
 // neutral: dữ liệu thiếu/không hợp lệ
-// LƯU Ý: vế phải vàng = P + W*0.75*D (CÓ nhân số ngày) — liền mạch với cam;
-// không dùng "W + P" (đó là bản user ghi nhầm, đã đính chính).
 export function getDeptRangeAlertStatus(planHours, actualHours, workers, searchDays) {
   if (
     ![planHours, actualHours, workers, searchDays].every(Number.isFinite) ||
@@ -288,7 +291,7 @@ export function getDeptRangeAlertStatus(planHours, actualHours, workers, searchD
   }
   if (actualHours < planHours) return 'red';
   const redLo = planHours + workers * searchDays;
-  if (actualHours > redLo) return 'red';
+  if (actualHours >= redLo) return 'red';
   const orangeLo = planHours + workers * 0.75 * searchDays;
   if (actualHours >= orangeLo) return 'orange';
   const yellowLo = planHours + workers * 0.5 * searchDays;

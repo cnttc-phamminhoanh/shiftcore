@@ -16,6 +16,11 @@ export interface IDailySummary {
   planIssueDate?: string;
   actualOtHours: number;
   overCount: number;
+  // 31/10/2026: minutes CHÍNH XÁC từ server (không làm tròn từng dòng) — để
+  // dòng Tổng bên client cộng khớp KPI (trước đây cộng planHours*60 của giá
+  // trị đã round → lệch ~2.6h). Server trả; demo có thể không có.
+  planOtMinutes?: number;
+  actualOtMinutes?: number;
 
   // Công thức trạng thái tổng (30/10/2026):
   //   green  — trong kế hoạch
