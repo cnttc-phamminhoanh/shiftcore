@@ -49,6 +49,14 @@ jobs:
         working-directory: ui-src
         run: npm run build
 
+      - name: Copy UI build vào public/
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        working-directory: ui-src
+        run: |
+          rm -rf ../public
+          mkdir -p ../public
+          cp -r dist/. ../public/
+
       # ---------- CD: chỉ khi push master ----------
       - name: Sync source sang production
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
