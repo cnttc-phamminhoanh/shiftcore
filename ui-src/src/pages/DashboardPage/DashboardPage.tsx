@@ -39,19 +39,6 @@ export default function DashboardPage() {
     to: dateTo,
   });
 
-  const handleDrillDown = (department: string, status: WorkerOtAlertStatus) => {
-    setOtDrillDown((prev) =>
-      prev?.department === department && prev.status === status
-        ? prev
-        : { department, status }
-    );
-    window.setTimeout(() => {
-      document
-        .getElementById('ot-worker-detail')
-        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 60);
-  };
-
   const handleApplyRange = (from: string, to: string) => {
     setDateFrom(from);
     setDateTo(to);

@@ -43,7 +43,6 @@ import { api } from '@/lib/api-client';
 import { isDateInRange } from '@/lib/date-range';
 import {
   formatHoursFromMinutes,
-  formatRatio,
   getOtAlertLevel,
   OT_LEVEL_META,
   type OtAlertLevel,
@@ -93,22 +92,6 @@ type DetailSortKey =
   | 'workers'
   | 'planHours'
   | 'otHours';
-
-// Color rule from the reference: near-plan = green, moderate over-plan =
-// orange, severe over-plan = red.
-function otValueClass(level: OtAlertLevel): string {
-  switch (level) {
-    case 'red':
-    case 'orange':
-      return 'text-destructive';
-    case 'yellow':
-      return 'text-orange-600';
-    case 'normal':
-      return 'text-success';
-    default:
-      return 'text-muted-foreground';
-  }
-}
 
 interface SortableHeadProps {
   label: string;
@@ -290,7 +273,7 @@ export default memo(function DailySummarySection({
   } | null>(null);
   const [workerLoading, setWorkerLoading] = useState(false as boolean);
   const [rollupLoading, setRollupLoading] = useState(false as boolean);
-  const [exporting, setExporting] = useState(false as boolean);
+  const [, setExporting] = useState(false as boolean);
 
   // 31/10/2026: đổi khoảng ngày thì XOÁ data cũ của 2 bảng server-side ngay
   // (worker + rollup) — tránh bảng hiện dữ liệu khoảng cũ trong lúc đang tải.
@@ -1049,7 +1032,7 @@ export default memo(function DailySummarySection({
               <SelectContent>
                 <SelectItem value="all">{t('table.allProcesses')}</SelectItem>
                 {processOptions.map((process) => (
-                  <SelectItem key={process} value={process}>
+                  <SelectItem key={process} value={process ?? ''}>
                     {process}
                   </SelectItem>
                 ))}

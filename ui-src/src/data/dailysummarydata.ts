@@ -127,6 +127,8 @@ export const MOCK_DAILY_SUMMARY: IDailySummary[] = RAW_DAILY_SUMMARY.map(
   (row) => ({
     ...row,
     date: shiftSampleDate(row.date),
-    planIssueDate: shiftSampleDate(row.planIssueDate),
+    planIssueDate: row.planIssueDate
+      ? shiftSampleDate(row.planIssueDate)
+      : undefined,
   })
 );

@@ -3,7 +3,6 @@ import {
   MOCK_DEPARTMENT_TREND_DATA,
   type IDepartmentTrendData,
 } from '@/data/departmenttrenddata';
-import type { IKpiData } from '@/data/kpidata';
 
 export type DataDepartment = 'CUT' | 'SEW' | 'EMB' | 'PRI' | 'FIN' | 'PAC' | 'SOC' | 'OTHER';
 
