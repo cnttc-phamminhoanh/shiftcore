@@ -13,6 +13,7 @@ import {
 import type { IDepartmentTrendData } from '@/data/departmenttrenddata';
 import type { IMonthlyData } from '@/data/monthlydata';
 import { ACTUAL_COLOR, CHART_FONT_FAMILY, PLAN_COLOR } from '@/lib/chart-colors';
+import { formatNumber } from '@/lib/format-number';
 import { monthsInRange } from '@/lib/date-range';
 
 interface MonthlyPlanSectionProps {
@@ -44,8 +45,10 @@ export default memo(function MonthlyPlanSection({
 
   // Unified with the header date-range search: only months whose calendar
   // period intersects the applied [dateFrom, dateTo] window are rendered.
-  // "All" shows the monthly OT totals; a department selection allocates the
-  // monthly OT by that department's share of the month's total output.
+  // "All" shows the monthly OT totals; a department selection shows the REAL
+  // plan/actual of those departments from department-trend (03/11/2026: bỏ
+  // cách ước "share theo tỷ lệ actual" cũ — plan của bộ phận lấy trực tiếp
+  // planHours = Σ sheet_hour sheet_sta=1, khớp dòng Tổng tab chi tiết).
   const rows = useMemo(() => {
     const months = monthsInRange(dateFrom, dateTo);
     if (selected === 'all') {
@@ -59,19 +62,15 @@ export default memo(function MonthlyPlanSection({
     }
     const departments = filterDepartments(selected);
     return months.map((month) => {
-      const monthHours = deptTrend.filter(
-        (row) => row.month === month
+      const monthRows = deptTrend.filter(
+        (row) => row.month === month && departments.includes(row.department)
       );
-      const totalHours = monthHours.reduce((sum, row) => sum + row.hours, 0);
-      const deptHours = monthHours
-        .filter((row) => departments.includes(row.department))
-        .reduce((sum, row) => sum + row.hours, 0);
-      const share = totalHours > 0 ? deptHours / totalHours : 0;
-      const base = monthly.find((m) => m.month === month);
+      const plan = monthRows.reduce((sum, row) => sum + (row.planHours ?? 0), 0);
+      const actual = monthRows.reduce((sum, row) => sum + row.hours, 0);
       return {
         month,
-        plan: Math.round((base?.planOtHours ?? 0) * share),
-        actual: Math.round((base?.actualOtHours ?? 0) * share),
+        plan,
+        actual,
       };
     });
   }, [selected, dateFrom, dateTo, monthly, deptTrend]);
@@ -80,13 +79,17 @@ export default memo(function MonthlyPlanSection({
   const actualName = t('common.actual');
   const hoursUnit = t('common.hours');
 
+  // 03/11/2026: định dạng số cho người xem — phân cách hàng nghìn bằng dấu
+  // phẩy + 2 chữ số thập phân (51,125,77 ; 59,614,00).
+  const format2 = (v: number) => formatNumber(v, 2);
+
   const option = useMemo<EChartsOption>(
     () => ({
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
         textStyle: { fontFamily: CHART_FONT_FAMILY },
-        valueFormatter: (value) => `${Number(value)} ${hoursUnit}`,
+        valueFormatter: (value) => `${format2(Number(value))} ${hoursUnit}`,
       },
       // Fixed margins (containLabel off) keep the plot area identical to the
       // DepartmentTrendSection chart beside it (which reserves 84px on the
@@ -107,7 +110,7 @@ export default memo(function MonthlyPlanSection({
         axisLabel: {
           color: '#64748B',
           fontFamily: CHART_FONT_FAMILY,
-          formatter: (value) => String(value),
+          formatter: (value: number) => formatNumber(value, 0),
         },
         splitLine: { lineStyle: { color: '#E2E8F0' } },
       },
@@ -124,7 +127,7 @@ export default memo(function MonthlyPlanSection({
             color: '#475569',
             fontSize: 11,
             fontFamily: CHART_FONT_FAMILY,
-            formatter: (params) => String(params.value),
+            formatter: (params) => format2(Number(params.value)),
           },
         },
         {
@@ -139,7 +142,7 @@ export default memo(function MonthlyPlanSection({
             color: '#475569',
             fontSize: 11,
             fontFamily: CHART_FONT_FAMILY,
-            formatter: (params) => String(params.value),
+            formatter: (params) => format2(Number(params.value)),
           },
         },
       ],

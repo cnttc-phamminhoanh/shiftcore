@@ -125,11 +125,14 @@ export async function refreshRange(from, to) {
     { from, toPlus }
   );
   // Lọc chỉ nhân viên sản xuất (giữ nguyên khi chưa có master).
+  // 03/11/2026: trim emp_no — nguồn v_t8_ot có dòng mã bị thừa khoảng trắng
+  // (vd "0943 ") khiến so khớp '0943' thất bại và loại nhầm nhân viên sản xuất.
   const prodCodes = productionEmpCodes();
   let list = rows;
   if (prodCodes) {
-    const filtered = rows.filter((r) => prodCodes.has(String(r.emp_no)));
-    if (filtered.length !== rows.length) console.log(`[t8-snapshot] lọc phi sản xuất: bỏ ${rows.length - filtered.length}/${rows.length} dòng`);
+    list = rows.map((r) => ({ ...r, emp_no: String(r.emp_no).trim() }));
+    const filtered = list.filter((r) => prodCodes.has(r.emp_no));
+    if (filtered.length !== list.length) console.log(`[t8-snapshot] lọc phi sản xuất: bỏ ${list.length - filtered.length}/${list.length} dòng (đã trim emp_no)`);
     list = filtered;
     if (list.length === 0) return 0;
   }

@@ -1,4 +1,5 @@
 // EXPORTS: OtAlertLevel, getOtAlertLevel, formatMinutes, formatRatio, OT_LEVEL_META
+import { formatNumber } from './format-number';
 
 export type OtAlertLevel = 'normal' | 'yellow' | 'orange' | 'red';
 
@@ -16,6 +17,24 @@ export function getOtAlertLevel(planOtMinutes: number, actualOtMinutes: number):
   return 'red';
 }
 
+// 03/11/2026: trạng thái dòng TAB "CHI TIẾT TỪNG CÔNG NHÂN" — 1 dòng = 1 công
+// nhân × 1 ngày → W=1, D=1 (đơn vị giờ):
+//   green : P <= A < P + 0.5h
+//   yellow: P + 0.5h <= A < P + 0.75h
+//   orange: P + 0.75h <= A < P + 1h
+//   red   : A >= P + 1h HOẶC A < P (thực tế dưới kế hoạch cũng là bất thường)
+// Ngưỡng theo phút: 0.5h=30', 0.75h=45', 1h=60'.
+export function getWorkerOtAlertLevel(planOtMinutes: number, actualOtMinutes: number): OtAlertLevel {
+  if (!Number.isFinite(planOtMinutes) || !Number.isFinite(actualOtMinutes) || planOtMinutes < 0 || actualOtMinutes < 0) {
+    return 'normal';
+  }
+  if (actualOtMinutes < planOtMinutes) return 'red';
+  if (actualOtMinutes >= planOtMinutes + 60) return 'red';
+  if (actualOtMinutes >= planOtMinutes + 45) return 'orange';
+  if (actualOtMinutes >= planOtMinutes + 30) return 'yellow';
+  return 'normal';
+}
+
 export function formatMinutes(totalMinutes: number): string {
   // Clock-style duration (e.g. 60 → "1:00", 90 → "1:30", 180 → "3:00").
   const rounded = Math.max(0, Math.round(totalMinutes));
@@ -30,7 +49,7 @@ export function formatMinutes(totalMinutes: number): string {
 // phút lẻ (vd 217 phút = 3.6166... → "3.62").
 export function formatHoursFromMinutes(totalMinutes: number): string {
   const hours = Math.max(0, totalMinutes) / 60;
-  return hours.toFixed(2);
+  return formatNumber(hours, 2);
 }
 
 export function formatRatio(planOtMinutes: number, actualOtMinutes: number): string {

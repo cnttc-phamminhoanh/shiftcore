@@ -10,6 +10,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import type { IKpiData } from '@/data/kpidata';
 import { getActualOTStatus, type ActualOtStatus } from '@/lib/actual-ot-status';
+import { formatNumber } from '@/lib/format-number';
 import { cn } from '@/lib/utils';
 
 const KPI_ICONS: Record<string, LucideIcon> = {
@@ -303,9 +304,11 @@ export default memo(function KpiCardsSection({
                     }),
                   }}
                 >
-                  {(kpi.title === 'Actual OT' || kpi.title === 'Total OT (Plan)') &&
-                  typeof kpi.value === 'number'
-                    ? kpi.value.toFixed(2)
+                  {typeof kpi.value === 'number'
+                    ? formatNumber(
+                        kpi.value,
+                        kpi.title.includes('Worker') ? 0 : 2
+                      )
                     : kpi.value}
                 </div>
               </div>

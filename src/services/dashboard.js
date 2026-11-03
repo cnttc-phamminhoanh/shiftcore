@@ -240,7 +240,12 @@ async function loadRecordsFresh(from, to) {
       workerId: code,
       workerName: emp.name || code,
       department: mapDeptToGroup(dept?.name, dept?.engName),
+      // 03/11/2026: "Bộ phận chi tiết" theo ngôn ngữ UI — process = tên tiếng
+      // Việt (hr_department.name), processEn = tên tiếng Anh (engName, fallback
+      // tên Việt nếu trống). Client chọn cột nào tùy ngôn ngữ; server lọc khớp
+      // CẢ HAI tên (vì client gửi value theo ngôn ngữ hiển thị).
       process: dept?.name || '',
+      processEn: dept?.engName || dept?.name || '',
       workers: headcountByDept.get(emp.departID) || 0,
       planOtMinutes: p ? Math.round(p.min) : 0,
       planIssueDate: p?.issue || '',
@@ -280,7 +285,7 @@ function filterRecords(records, { deptSet, process, alert, search }) {
   }
   if (process) {
     const p = String(process).trim();
-    rows = rows.filter((r) => r.process === p);
+    rows = rows.filter((r) => r.process === p || r.processEn === p);
   }
   if (alert && alert !== 'all') {
     if (alert === 'overPlan') {
@@ -292,7 +297,7 @@ function filterRecords(records, { deptSet, process, alert, search }) {
   if (search) {
     const q = String(search).toLowerCase();
     rows = rows.filter((r) =>
-      `${r.department} ${r.process} ${r.workerId} ${r.workerName}`.toLowerCase().includes(q)
+      `${r.department} ${r.process} ${r.processEn ?? ''} ${r.workerId} ${r.workerName}`.toLowerCase().includes(q)
     );
   }
   return rows;
@@ -362,6 +367,22 @@ function applyAlertFilter(rows, alert) {
     (r) =>
       r.actualOtMinutes < HEAVY_OT_MINUTES &&
       rules.getOtAlertLevel(r.planOtMinutes, r.actualOtMinutes) === alert
+  );
+}
+
+// Lọc mức trạng thái tab "Chi tiết từng công nhân" — công thức 03/11/2026
+// (1 dòng = 1 công nhân × 1 ngày → getWorkerOtAlertLevel). Giữ riêng khỏi
+// applyAlertFilter (dùng cho tab bộ phận, tỷ lệ cũ).
+function applyWorkerAlertFilter(rows, alert) {
+  if (!alert || alert === 'all') return rows;
+  if (alert === 'heavyOt') return rows;
+  if (alert === 'overPlan') {
+    return rows.filter((r) => r.actualOtMinutes > r.planOtMinutes);
+  }
+  return rows.filter(
+    (r) =>
+      r.actualOtMinutes < HEAVY_OT_MINUTES &&
+      rules.getWorkerOtAlertLevel(r.planOtMinutes, r.actualOtMinutes) === alert
   );
 }
 
@@ -439,9 +460,11 @@ export async function buildRecords(from, to, filters = {}) {
       `${r.workerName} ${r.workerId}`.toLowerCase().includes(q)
     );
   }
-  // Lọc theo bộ phận chi tiết (process).
+  // Lọc theo bộ phận chi tiết (process) — khớp tên tiếng Việt HOẶC tiếng Anh.
   if (filters.process && filters.process !== 'all') {
-    rows = rows.filter((r) => r.process === filters.process);
+    rows = rows.filter(
+      (r) => r.process === filters.process || r.processEn === filters.process
+    );
   }
   // Drill-down từ chart: lọc thêm nhóm bộ phận của ô được click (AND).
   if (filters.drillDept && filters.drillDept !== 'all') {
@@ -467,7 +490,7 @@ export async function buildRecords(from, to, filters = {}) {
       unique: new Set(rows.map((r) => r.workerId)).size,
     };
   } else {
-    rows = applyAlertFilter(rows, filters.alert);
+    rows = applyWorkerAlertFilter(rows, filters.alert);
   }
   const totals = {
     plan: rows.reduce((s, r) => s + r.planOtMinutes, 0),
@@ -496,7 +519,9 @@ export async function buildProcessRollup(from, to, filters = {}) {
   let rows = (await loadRecords(from, to)).filter((r) => deptSet.has(r.department));
 
   if (filters.process && filters.process !== 'all') {
-    rows = rows.filter((r) => r.process === filters.process);
+    rows = rows.filter(
+      (r) => r.process === filters.process || r.processEn === filters.process
+    );
   }
   if (filters.date && filters.date !== 'all') {
     rows = rows.filter((r) => r.date === filters.date);
@@ -542,6 +567,7 @@ function rollupProcessRows(rows, filters, searchDays) {
     const entry = acc.get(key) ?? {
       date: row.date,
       process: row.process,
+      processEn: row.processEn ?? row.process,
       workers: new Set(),
       ge4Set: new Set(),
       plan: 0,
@@ -560,6 +586,7 @@ function rollupProcessRows(rows, filters, searchDays) {
     .map((e) => ({
       date: e.date,
       process: e.process,
+      processEn: e.processEn,
       workers: e.workers.size,
       otGe4: e.ge4Set.size,
       plan: e.plan,

@@ -13,6 +13,8 @@ export interface IWorkerOtRecord {
   workerName: string;
   department: 'CUT' | 'SEW' | 'EMB' | 'PRI' | 'FIN' | 'PAC' | 'SOC' | 'OTHER';
   process: string;
+  /** 03/11/2026: tên tiếng Anh của bộ phận chi tiết (hr_department.engName) — dùng khi UI ngôn ngữ ≠ tiếng Việt */
+  processEn?: string;
   workers: number;
   planOtMinutes: number;
   planIssueDate: string;

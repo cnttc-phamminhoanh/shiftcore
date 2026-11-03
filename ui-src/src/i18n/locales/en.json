@@ -23,7 +23,26 @@
     "title": "OT Plan & Actual",
     "subtitleFactory": "Garment Factory",
     "subtitleMonitoring": "Plan & Actual Time Analysis",
+    "subtitleWorkers": "Plant-wide Workers",
     "minDateNote": "Data available from {{date}}"
+  },
+  "dateRange": {
+    "title": "Select time range",
+    "day": "Day",
+    "month": "Month",
+    "year": "Year",
+    "from": "From date",
+    "to": "To date",
+    "fromMonth": "From month",
+    "toMonth": "To month",
+    "fromYear": "From year",
+    "toYear": "To year",
+    "monthWord": "Month",
+    "searchMonth": "Search month...",
+    "searchYear": "Search year...",
+    "previewLabel": "Preview",
+    "today": "Today",
+    "apply": "Apply"
   },
   "kpi": {
     "workerCount": "Worker Count",
@@ -51,7 +70,7 @@
   },
   "chart": {
     "monthlyOtTrend": "OT Plan & Actual",
-    "processTimeTrend": "Time Statistics by Process",
+    "processTimeTrend": "Time Statistics by Department",
     "emptyRangeTitle": "No data in the selected period",
     "emptyRangeHint": "Adjust the search date range so it overlaps the sample data.",
     "recentMonths": "Recent months",

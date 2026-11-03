@@ -18,6 +18,27 @@ export function getOtAlertLevel(planOtMinutes, actualOtMinutes) {
   return 'red';
 }
 
+// ---------- Trạng thái dòng TAB "CHI TIẾT TỪNG CÔNG NHÂN" (03/11/2026) ----------
+// Mỗi dòng = 1 công nhân × 1 ngày → W = 1, D = 1 (đơn vị giờ):
+//   green : P + W*0*D <= A < P + W*0.5*D   (P <= A < P + 0.5h)
+//   yellow: P + W*0.5*D <= A < P + W*0.75*D (P + 0.5h <= A < P + 0.75h)
+//   orange: P + W*0.75*D <= A < P + W*1*D   (P + 0.75h <= A < P + 1h)
+//   red   : A >= P + W*1*D  HOẶC A < P      (vượt trần / làm DƯỚI kế hoạch)
+// Quy ước ngưỡng theo phút: 0.5h = 30', 0.75h = 45', 1h = 60'.
+export function getWorkerOtAlertLevel(planOtMinutes, actualOtMinutes) {
+  if (
+    !Number.isFinite(planOtMinutes) || !Number.isFinite(actualOtMinutes) ||
+    planOtMinutes < 0 || actualOtMinutes < 0
+  ) {
+    return 'normal';
+  }
+  if (actualOtMinutes < planOtMinutes) return 'red';
+  if (actualOtMinutes >= planOtMinutes + 60) return 'red';
+  if (actualOtMinutes >= planOtMinutes + 45) return 'orange';
+  if (actualOtMinutes >= planOtMinutes + 30) return 'yellow';
+  return 'normal';
+}
+
 // ---------- Cảnh báo theo GIỜ OT TUYỆT ĐỐI của công nhân (theo ngày) ----------
 // normal: Actual OT <= 2h ; pink: 2h < Actual < 4h ; red: Actual >= 4h
 // Thiếu dữ liệu / không hợp lệ KHÔNG coi là 0h — trả về normal (bỏ qua).

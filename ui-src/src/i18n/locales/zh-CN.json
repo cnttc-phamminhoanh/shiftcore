@@ -23,7 +23,26 @@
     "title": "加班计划与实际",
     "subtitleFactory": "服装工厂",
     "subtitleMonitoring": "计划与实际时间分析",
+    "subtitleWorkers": "全厂工人",
     "minDateNote": "数据自 {{date}} 起可用"
+  },
+  "dateRange": {
+    "title": "选择时间范围",
+    "day": "日",
+    "month": "月",
+    "year": "年",
+    "from": "开始日期",
+    "to": "结束日期",
+    "fromMonth": "开始月份",
+    "toMonth": "结束月份",
+    "fromYear": "开始年份",
+    "toYear": "结束年份",
+    "monthWord": "月份",
+    "searchMonth": "搜索月份...",
+    "searchYear": "搜索年份...",
+    "previewLabel": "预览",
+    "today": "今天",
+    "apply": "应用"
   },
   "kpi": {
     "workerCount": "工人数量",
@@ -51,7 +70,7 @@
   },
   "chart": {
     "monthlyOtTrend": "加班计划与实际",
-    "processTimeTrend": "各工段时间统计",
+    "processTimeTrend": "各部门时间统计",
     "emptyRangeTitle": "所选时间段内没有数据",
     "emptyRangeHint": "请调整搜索的日期范围，使其与示例数据重叠。",
     "recentMonths": "最近月份",

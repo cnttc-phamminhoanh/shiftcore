@@ -12,6 +12,7 @@ import {
 } from '@/data/deptseries';
 import type { IDepartmentTrendData } from '@/data/departmenttrenddata';
 import { CHART_FONT_FAMILY, DEPARTMENT_COLORS } from '@/lib/chart-colors';
+import { formatNumber } from '@/lib/format-number';
 import { monthsInRange } from '@/lib/date-range';
 
 interface DepartmentTrendSectionProps {
@@ -31,11 +32,10 @@ interface TooltipParam {
   dataIndex?: number;
 }
 
-// Plan hours demo: suy ra tu actual API (ti le mock, lam tron chuc).
-const PLAN_RATIO: Record<string, number> = {
-  CUT: 0.93, SEW: 0.92, EMB: 0.9, PRI: 0.9, FIN: 0.92, OTHER: 0.95, PAC: 0.94,
-};
-
+// 03/11/2026: bỏ PLAN_RATIO mock — plan dùng planHours THẬT từ API
+// (/api/overtime/department-trend đã trả planHours = Σ sheet_hour, sheet_sta=1
+// của từng nhóm). Trước đây plan = actual × hệ số giả định (0.90-0.95) làm
+// tròn chục → lệch hẳn so với dòng Tổng tab chi tiết (bug 03/11/2026).
 export default memo(function DepartmentTrendSection({
   selected,
   dateFrom,
@@ -43,11 +43,10 @@ export default memo(function DepartmentTrendSection({
   deptTrend,
 }: DepartmentTrendSectionProps) {
   const planHoursFor = (dept: string, month: string) => {
-    const actual =
+    return (
       deptTrend.find((row) => row.department === dept && row.month === month)
-        ?.hours ?? 0;
-    const ratio = PLAN_RATIO[dept] ?? 0.9;
-    return Math.round((actual * ratio) / 10) * 10;
+        ?.planHours ?? 0
+    );
   };
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
@@ -136,7 +135,7 @@ export default memo(function DepartmentTrendSection({
             DEPARTMENT_COLORS[dept as keyof typeof DEPARTMENT_COLORS] ?? '#64748B';
           const row = (label: string, value: number, strong: boolean) =>
             `<div style="color:#334155;font-size:12px;">${label}: ` +
-            `${strong ? `<b>${value}</b>` : value} ${hoursUnit}` +
+            `${strong ? `<b>${formatNumber(value)}</b>` : formatNumber(value)} ${hoursUnit}` +
             `</div>`;
           return (
             `<div style="font-family:${CHART_FONT_FAMILY};">` +
@@ -219,7 +218,7 @@ export default memo(function DepartmentTrendSection({
         axisLabel: {
           color: '#64748B',
           fontFamily: CHART_FONT_FAMILY,
-          formatter: (value: number) => value.toLocaleString(locale),
+          formatter: (value: number) => formatNumber(value, 0),
         },
         splitLine: { lineStyle: { color: '#E2E8F0', type: 'dashed' } },
       },

@@ -43,7 +43,7 @@ import { api } from '@/lib/api-client';
 import { isDateInRange } from '@/lib/date-range';
 import {
   formatHoursFromMinutes,
-  getOtAlertLevel,
+  getWorkerOtAlertLevel,
   OT_LEVEL_META,
   type OtAlertLevel,
 } from '@/lib/ot-alert';
@@ -187,6 +187,7 @@ interface OtDrillDown {
 interface RollupRow {
   date: string;
   process: string;
+  processEn: string;
   workers: number;
   otGe4: number;
   plan: number;
@@ -223,7 +224,10 @@ export default memo(function DailySummarySection({
   onClearDrillDown,
   daily,
 }: DailySummarySectionProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // 03/11/2026: "Bộ phận chi tiết" theo ngôn ngữ UI — tiếng Việt dùng tên Việt
+  // (process), tiếng Anh/Tiếng Trung dùng tên tiếng Anh (processEn).
+  const langVi = i18n.language === 'vi';
   // Nh峄?tab 膽ang ch峄峮 khi load l岷 trang (sessionStorage) —tr瓢峄沜 膽芒y lu么n v峄?  // tab "Chi ti岷縯 b峄?ph岷璶" khi F5 r岷 b岷 ti峄噉 (29/10/2026).
   const [mode, setMode] = useState<ViewMode>(() => {
     const saved = sessionStorage.getItem('ot-detail-tab');
@@ -585,17 +589,84 @@ export default memo(function DailySummarySection({
     [workerData]
   );
 
-  // Distinct process names cho dropdown (union t峄?daily summary).
+  // Nhóm đang tác động (nút nhóm dưới KPI ưu tiên → draft dropdown Bộ phận →
+  // bộ lọc đã áp dụng). Dùng để lấy danh sách "Bộ phận chi tiết" theo nhóm.
+  const activeGroup = useMemo(() => {
+    if (selected !== 'all') return selected;
+    if (draftDepartment !== 'all')
+      return draftDepartment === 'OTHER' ? 'other' : draftDepartment;
+    return activeFilters.department === 'OTHER' ? 'other' : activeFilters.department;
+  }, [selected, draftDepartment, activeFilters.department]);
+
+  // 03/11/2026: danh sách "Bộ phận chi tiết" của tab "Chi tiết từng công nhân"
+  // lấy RIÊNG từ API gom theo process với nhóm đang chọn (không phụ thuộc trang
+  // dữ liệu công nhân đang xem — trước đây chỉ có 1 trang nên thiếu/t rỗng).
+  // Mỗi phần tử giữ cả tên Việt (process) lẫn tên tiếng Anh (processEn) để
+  // dropdown hiển thị theo ngôn ngữ UI.
+  const [workerProcessList, setWorkerProcessList] = useState<{ process: string; processEn: string }[] | null>(null);
+  useEffect(() => {
+    if (mode !== 'worker') return;
+    let alive = true;
+    setWorkerProcessList(null);
+    api
+      .processRollup(
+        { from: dateFrom, to: dateTo },
+        { dept: activeGroup, process: 'all', alert: 'all', date: 'all' }
+      )
+      .then((res) => {
+        if (!alive) return;
+        const rows = res.rows as unknown as RollupRow[];
+        const byName = new Map<string, string>();
+        for (const r of rows) {
+          if (!r.process) continue;
+          if (!byName.has(r.process)) byName.set(r.process, r.processEn || r.process);
+        }
+        setWorkerProcessList(
+          Array.from(byName, ([process, processEn]) => ({ process, processEn })).sort(
+            (a, b) => a.process.localeCompare(b.process)
+          )
+        );
+      })
+      .catch(() => {
+        if (alive) setWorkerProcessList(null);
+      });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, dateFrom, dateTo, activeGroup]);
+
+  // Danh sách "Bộ phận chi tiết" dạng {process, processEn} — nguồn ổn định,
+  // không phụ thuộc ngôn ngữ (dùng cho cả hiển thị lẫn kiểm tra lọc hợp lệ).
+  const processEntries = useMemo(() => {
+    let src: { process: string; processEn: string }[];
+    if (mode === 'worker') {
+      src =
+        workerProcessList ??
+        (workerData?.rows ?? []).map((r) => ({
+          process: r.process,
+          processEn: r.processEn || r.process,
+        }));
+    } else {
+      src = (rollupRows ?? []).map((r) => ({
+        process: r.process,
+        processEn: r.processEn || r.process,
+      }));
+    }
+    const byName = new Map<string, string>();
+    for (const e of src) {
+      if (!e.process) continue;
+      if (!byName.has(e.process)) byName.set(e.process, e.processEn || e.process);
+    }
+    return Array.from(byName, ([process, processEn]) => ({ process, processEn })).sort(
+      (a, b) => a.process.localeCompare(b.process)
+    );
+  }, [mode, workerProcessList, workerData, rollupRows]);
+
+  // Options hiển thị theo ngôn ngữ UI: tiếng Việt → tên Việt, khác → tên tiếng Anh.
   const processOptions = useMemo(
-    () =>
-      Array.from(
-        new Set([
-          ...daily.map((r) => r.process).filter(Boolean),
-          ...(workerData?.rows ?? []).map((r) => r.process),
-          ...(rollupRows ?? []).map((r) => r.process),
-        ])
-      ).sort(),
-    [daily, workerData, rollupRows]
+    () => processEntries.map((e) => (langVi ? e.process : e.processEn)),
+    [processEntries, langVi]
   );
   // Danh sách ngày cho bộ lọc "Ngày" (tab Chi tiết bộ phận + Chi tiết từng
   // công nhân, 30/10/2026): lấy từ cả 2 nguồn để tab công nhân không bị rỗng
@@ -632,6 +703,33 @@ export default memo(function DailySummarySection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateFrom, dateTo, dateOptions, mode]);
 
+  // 03/11/2026: khi đổi nhóm (nút KPI / dropdown Bộ phận) ở tab "Chi tiết từng
+  // công nhân", process đang lọc có thể không còn thuộc danh sách mới → reset
+  // draft + bộ lọc đã áp dụng về "Tất cả" để label dropdown không hiển thị rỗng.
+  // Khi chỉ ĐỔI NGÔN NGỮ (cùng nguồn), đổi sang tên theo ngôn ngữ mới thay vì reset.
+  useEffect(() => {
+    if (draftProcess !== 'all' && !processOptions.includes(draftProcess)) {
+      const hit = processEntries.find(
+        (e) => e.process === draftProcess || e.processEn === draftProcess
+      );
+      setDraftProcess(hit ? (langVi ? hit.process : hit.processEn) : 'all');
+    }
+    const applied = filters[mode]?.process;
+    if (applied && applied !== 'all' && !processOptions.includes(applied)) {
+      const hit = processEntries.find(
+        (e) => e.process === applied || e.processEn === applied
+      );
+      setFilters((prev) => ({
+        ...prev,
+        [mode]: {
+          ...prev[mode],
+          process: hit ? (langVi ? hit.process : hit.processEn) : 'all',
+        },
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [processOptions, processEntries, langVi, mode, draftProcess, filters]);
+
   // Exports the currently visible rows of the active view as an
   // Excel-compatible UTF-8 CSV (with BOM so Vietnamese opens cleanly).
   const handleExport = async () => {
@@ -642,20 +740,20 @@ export default memo(function DailySummarySection({
         t('table.date'),
         t('table.department'),
         t('table.workers'),
-        t('table.otGe4'),
-        t('table.overPlan'),
         t('table.planHours'),
         t('table.actualHours'),
+        t('table.otGe4'),
+        t('table.overPlan'),
         t('table.status'),
       ];
       data = sortedProcessRows.map((r) => [
         r.date,
         r.department,
         r.workers,
-        r.otGe4 ?? 0,
-        r.overCount ?? 0,
         Math.round(r.planHours * 10) / 10,
         Math.round(r.actualOtHours * 10) / 10,
+        r.otGe4 ?? 0,
+        r.overCount ?? 0,
         r.status === 'neutral' ? '' : r.status === 'green' ? t('otAlert.normal') : t('otAlert.' + r.status),
       ]);
     } else if (mode === 'worker') {
@@ -666,8 +764,8 @@ export default memo(function DailySummarySection({
         t('table.workerName'),
         t('table.process'),
         t('table.planHours'),
-        t('table.planIssueDate'),
         t('table.actualHours'),
+        t('table.planIssueDate'),
       ];
       // Exports the FULL filtered result (all pages) —b岷g ch峄?gi峄?trang
       // hi峄噉 t岷 n锚n export l岷 l岷 to脿n b峄?t峄?server b岷眓g request l峄沶.
@@ -694,10 +792,10 @@ export default memo(function DailySummarySection({
           r.department,
           r.workerId,
           r.workerName,
-          r.process,
+          langVi ? r.process : r.processEn || r.process,
           Math.round((r.planOtMinutes / 60) * 10) / 10,
-          r.planIssueDate,
           Math.round((r.actualOtMinutes / 60) * 10) / 10,
+          r.planIssueDate,
         ]);
       } finally {
         setExporting(false);
@@ -707,19 +805,19 @@ export default memo(function DailySummarySection({
         t('table.date'),
         t('table.process'),
         t('table.workers'),
-        t('table.otGe4'),
         t('table.planOT'),
         t('table.actualOT'),
+        t('table.otGe4'),
         t('table.overPlan'),
         t('table.status'),
       ];
       data = sortedRollup.map((r) => [
         r.date,
-        r.process,
+        langVi ? r.process : r.processEn || r.process,
         r.workers,
-        r.otGe4 ?? 0,
         Math.round((r.plan / 60) * 10) / 10,
         Math.round((r.actual / 60) * 10) / 10,
+        r.otGe4 ?? 0,
         r.over,
         r.status === 'neutral' ? '' : r.status === 'green' ? t('otAlert.normal') : t('otAlert.' + r.status),
       ]);
@@ -747,6 +845,7 @@ export default memo(function DailySummarySection({
       (rollupRows ?? []).map((row) => ({
         date: row.date,
         process: row.process,
+        processEn: row.processEn || row.process,
         workers: row.workers,
         otGe4: row.otGe4,
         plan: row.plan,
@@ -1135,13 +1234,6 @@ export default memo(function DailySummarySection({
                     onSort={handleDetailSort}
                     alignCenter
                   />
-                  <TableHead
-                    className="whitespace-nowrap text-center"
-                    title={t('table.otGe4Hint')}
-                  >
-                    {t('table.otGe4')}
-                  </TableHead>
-                  <TableHead className="whitespace-nowrap text-center">{t('table.overPlan')}</TableHead>
                   <SortableHead
                     label={t('table.planHours')}
                     column="planHours"
@@ -1158,6 +1250,13 @@ export default memo(function DailySummarySection({
                     onSort={handleDetailSort}
                     alignCenter
                   />
+                  <TableHead
+                    className="whitespace-nowrap text-center"
+                    title={t('table.otGe4Hint')}
+                  >
+                    {t('table.otGe4')}
+                  </TableHead>
+                  <TableHead className="whitespace-nowrap text-center">{t('table.overPlan')}</TableHead>
                   <TableHead className="whitespace-nowrap text-center">{t('table.status')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -1187,6 +1286,12 @@ export default memo(function DailySummarySection({
                         </button>
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-center tabular-nums">
+                        {formatHoursFromMinutes(row.planOtMinutes ?? Math.round(row.planHours * 60))}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-center tabular-nums font-medium">
+                        {formatHoursFromMinutes(row.actualOtMinutes ?? Math.round(row.actualOtHours * 60))}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-center tabular-nums">
                         {row.otGe4 ?? 0}
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-center tabular-nums">
@@ -1202,12 +1307,6 @@ export default memo(function DailySummarySection({
                         ) : (
                           row.overCount
                         )}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-center tabular-nums">
-                        {formatHoursFromMinutes(row.planOtMinutes ?? Math.round(row.planHours * 60))}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-center tabular-nums font-medium">
-                        {formatHoursFromMinutes(row.actualOtMinutes ?? Math.round(row.actualOtHours * 60))}
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-center">
                         <span
@@ -1238,16 +1337,16 @@ export default memo(function DailySummarySection({
                       {processTotals.workers}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums">
-                      {processTotals.otGe4}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums">
-                      {processTotals.over}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums">
                       {formatHoursFromMinutes(processTotals.plan)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums text-destructive">
                       {formatHoursFromMinutes(processTotals.actual)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums">
+                      {processTotals.otGe4}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums">
+                      {processTotals.over}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-center" />
                   </TableRow>
@@ -1269,8 +1368,8 @@ export default memo(function DailySummarySection({
                   <TableHead className="whitespace-nowrap text-center">{t('table.workerId')}</TableHead>
                   <TableHead className="whitespace-nowrap text-center">{t('table.workerName')}</TableHead>
                   <TableHead className="whitespace-nowrap text-center">{t('table.planHours')}</TableHead>
-                  <TableHead className="whitespace-nowrap text-center">{t('table.planIssueDate')}</TableHead>
                   <TableHead className="whitespace-nowrap text-center">{t('table.actualHours')}</TableHead>
+                  <TableHead className="whitespace-nowrap text-center">{t('table.planIssueDate')}</TableHead>
                   <TableHead className="whitespace-nowrap text-center">{t('table.status')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -1283,7 +1382,7 @@ export default memo(function DailySummarySection({
                   <SkeletonRows columns={10} />
                 ) : (
                   pageWorkerRows.map((row, idx) => {
-                    const level = getOtAlertLevel(row.planOtMinutes, row.actualOtMinutes);
+                    const level = getWorkerOtAlertLevel(row.planOtMinutes, row.actualOtMinutes);
                     return (
                       <TableRow key={row.id} className="h-11 even:bg-muted/25">
                         <TableCell className="whitespace-nowrap text-center tabular-nums text-muted-foreground">
@@ -1296,7 +1395,7 @@ export default memo(function DailySummarySection({
                           <DepartmentBadge departmentCode={row.department} />
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-center">
-                          <ProcessBadge processName={row.process} />
+                          <ProcessBadge processName={langVi ? row.process : row.processEn || row.process} />
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-center tabular-nums text-muted-foreground">
                           {row.workerId}
@@ -1307,11 +1406,11 @@ export default memo(function DailySummarySection({
                         <TableCell className="whitespace-nowrap text-center tabular-nums">
                           {row.planOtMinutes > 0 ? formatHoursFromMinutes(row.planOtMinutes) : '—'}
                         </TableCell>
-                        <TableCell className="whitespace-nowrap text-center tabular-nums text-muted-foreground">
-                          {row.planIssueDate}
-                        </TableCell>
                         <TableCell className="whitespace-nowrap text-center tabular-nums">
                           {formatHoursFromMinutes(row.actualOtMinutes)}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-center tabular-nums text-muted-foreground">
+                          {row.planIssueDate}
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-center">
                           {row.actualOtMinutes >= HEAVY_OT_MINUTES ? (
@@ -1347,10 +1446,10 @@ export default memo(function DailySummarySection({
                     <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums">
                       {formatHoursFromMinutes(workerTotals.plan)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-center" />
                     <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums text-destructive">
                       {formatHoursFromMinutes(workerTotals.actual)}
                     </TableCell>
+                    <TableCell className="whitespace-nowrap text-center" />
                     <TableCell className="whitespace-nowrap text-center" />
                   </TableRow>
                 </TableFooter>
@@ -1389,12 +1488,6 @@ export default memo(function DailySummarySection({
                     onSort={handleSort}
                     alignCenter
                   />
-                  <TableHead
-                    className="whitespace-nowrap text-center"
-                    title={t('table.otGe4Hint')}
-                  >
-                    {t('table.otGe4')}
-                  </TableHead>
                   <SortableHead
                     label={t('table.planOT')}
                     column="plan"
@@ -1411,6 +1504,12 @@ export default memo(function DailySummarySection({
                     onSort={handleSort}
                     alignCenter
                   />
+                  <TableHead
+                    className="whitespace-nowrap text-center"
+                    title={t('table.otGe4Hint')}
+                  >
+                    {t('table.otGe4')}
+                  </TableHead>
                   <SortableHead
                     label={t('table.overPlan')}
                     column="over"
@@ -1436,7 +1535,7 @@ export default memo(function DailySummarySection({
                           {row.date}
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-center">
-                          <ProcessBadge processName={row.process} />
+                          <ProcessBadge processName={langVi ? row.process : row.processEn || row.process} />
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-center tabular-nums">
                           <button
@@ -1449,13 +1548,13 @@ export default memo(function DailySummarySection({
                           </button>
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-center tabular-nums">
-                          {row.otGe4 ?? 0}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap text-center tabular-nums">
                           {row.plan > 0 ? formatHoursFromMinutes(row.plan) : '—'}
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-center tabular-nums">
                           {formatHoursFromMinutes(row.actual)}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-center tabular-nums">
+                          {row.otGe4 ?? 0}
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-center tabular-nums">
                           {row.over > 0 ? (
@@ -1501,13 +1600,13 @@ export default memo(function DailySummarySection({
                       {rollupTotals.workers}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums">
-                      {rollupTotals.otGe4}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums">
                       {formatHoursFromMinutes(rollupTotals.plan)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums text-destructive">
                       {formatHoursFromMinutes(rollupTotals.actual)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums">
+                      {rollupTotals.otGe4}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-center font-semibold tabular-nums">
                       {rollupTotals.over}
